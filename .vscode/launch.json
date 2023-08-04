@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "admm1",
+            "type":"cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetDirectory}",
+            "args": ["-test", "1"],
+            "stopAtEntry": true,
+            "cwd": "${command:cmake.getLaunchTargetDirectory}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
+                }
+            ],
+        },
+        {
+            "name": "admm2",
+            "type":"cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetDirectory}",
+            "args": ["-test", "2"],
+            "stopAtEntry": true,
+            "cwd": "${command:cmake.getLaunchTargetDirectory}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
+                }
+            ],
+        }
+    ]
+}

@@ -6,7 +6,7 @@ endif()
 
 if(OPENVDB_FOUND)
 
-  add_ziran_executable(admm main.cpp)
+  add_executable(admm main.cpp)
   target_compile_options(admm PRIVATE ${ZIRAN_CXXFLAGS_LTO})
   target_link_libraries(admm ziran mpmdev tbbmalloc tbbmalloc_proxy ${ZIRAN_CXXFLAGS_LTO})
   
