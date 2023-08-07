@@ -576,7 +576,7 @@ public:
 
     if (test_number == 7) {
       sim.output_dir.path = "output/cow";
-      sim.end_frame = 120;
+      sim.end_frame = 100;
       sim.dx = 0.02;
       sim.gravity = 0 * TV::Unit(1);
       sim.step.max_dt = sim.step.frame_dt / 12;
