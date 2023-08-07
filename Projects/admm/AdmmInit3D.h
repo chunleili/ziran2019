@@ -595,10 +595,10 @@ public:
 
       {
         StdVector<TV> meshed_points;
-        readPositionObj("car_left.obj", meshed_points);
+        readPositionObj("cow.obj", meshed_points);
         MpmParticleHandleBase<T, dim> particles_handle =
             init_helper.sampleFromVdbFileWithExistingPoints(
-                meshed_points, "LevelSets/car_left.vdb", 2, 8);
+                meshed_points, "LevelSets/cow.vdb", 2, 8);
         StvkWithHencky<T, dim> model(2000, 0.4);
         particles_handle.addFBasedMpmForce(model);
         VonMisesStvkHencky<T, dim> p(2, FLT_MAX, 0);
