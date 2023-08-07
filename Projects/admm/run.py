@@ -1,4 +1,9 @@
 import subprocess
+import os
+
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+os.chdir(current_path)
 
 case_number_list = [1, 2, 3, 4, 5, 6]
 
