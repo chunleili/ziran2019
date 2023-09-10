@@ -729,6 +729,90 @@ public:
       //     }
       //   });
     }
+
+    // honey stawberry
+    // ./mpm -test 2008 -E 1e-4
+    if (test_number == 9) {
+      T p_E = 1e-4;
+      sim.output_dir.path = "output/honey";
+      sim.viscosity_v = 0.4;
+      sim.viscosity_d = 0.4;
+      sim.end_frame = 240;
+      sim.dx = 0.01;
+      sim.gravity = TV(0, -9.8, 0);
+      sim.step.frame_dt = 1. / 25;
+      sim.step.max_dt = 5e-4;
+      sim.quasistatic = false;
+      sim.symplectic = false;
+      sim.objective.matrix_free = true;
+      sim.verbose = false;
+      sim.cfl = 0.6;
+      init_helper.addAllWallsInDomain(
+          4096 * sim.dx, 5 * sim.dx,
+          AnalyticCollisionObject<T, dim>::STICKY); // add safety domain walls
+                                                    // for SPGrid.
+      sim.rho_scale = 0.8;
+
+      sim.use_ruiz = false;
+      sim.admm_max_iterations = 30;
+      sim.local_tolerance = 1e-8;
+      sim.global_tolerance = 1e-8;
+      sim.global_max_iteration = 100000;
+
+      sim.enable_visco = true;
+      sim.use_elasticity_plasticity = false;
+
+      // ground is at 0
+      TV ground_origin(0, 0.0, 0);
+      TV ground_normal(0, 1, 0);
+      HalfSpace<T, dim> ls(ground_origin, ground_normal);
+      AnalyticCollisionObject<T, dim> ground(
+          [&](T, AnalyticCollisionObject<T, dim> &) {}, ls,
+          AnalyticCollisionObject<T, dim>::STICKY);
+      init_helper.addAnalyticCollisionObject(ground);
+
+      // create source collision object
+      T rho = 2;
+      T E = 100;
+      int ppc = 8;
+      Sphere<T, dim> sphere(TV(1, 5, 0.2), .03);
+      TV material_speed(0.0, 0, 0);
+      SourceCollisionObject<T, dim> sphere_source(sphere, material_speed);
+      int source_id = init_helper.addSourceCollisionObject(sphere_source);
+      init_helper.sampleSourceAtTheBeginning(source_id, rho, ppc);
+
+      // initialize empty particle handle for restarting
+      MpmParticleHandleBase<T, dim> empty_particle_handle =
+          init_helper.getZeroParticle();
+      StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
+      equilibrated_model.lambda *= 10;
+      empty_particle_handle.addFBasedMpmForce(equilibrated_model);
+      VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
+      empty_particle_handle.addPlasticity(equilibrated_model, p, "F");
+      StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
+      empty_particle_handle.addFElasticNonequilibratedBasedMpmForce(
+          nonequilibrated_model, (T).4, (T).4);
+
+      sim.end_time_step_callbacks.push_back([this, source_id, rho, ppc, E,
+                                             p_E](int frame, int substep) {
+        if (frame < 2400) {
+          // add more particles from source Collision object
+          int N = init_helper.sourceSampleAndPrune(source_id, rho, ppc);
+          if (N) {
+            MpmParticleHandleBase<T, dim> source_particles_handle =
+                init_helper.getParticlesFromSource(source_id, rho, ppc);
+            StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
+            equilibrated_model.lambda *= 10;
+            source_particles_handle.addFBasedMpmForce(equilibrated_model);
+            VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
+            source_particles_handle.addPlasticity(equilibrated_model, p, "F");
+            StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
+            source_particles_handle.addFElasticNonequilibratedBasedMpmForce(
+                nonequilibrated_model, (T).4, (T).4);
+          }
+        }
+      });
+    }
   }
 };
 } // namespace ZIRAN
