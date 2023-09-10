@@ -734,13 +734,13 @@ public:
     // ./mpm -test 2008 -E 1e-4
     if (test_number == 9) {
       T p_E = 1e-4;
-      sim.output_dir.path = "output/honey";
+      sim.output_dir.path = "output/honey_200";
 
       // viscosity_v and viscosity_d refer to fang19 Eq.8, Fig.15。
       sim.viscosity_v = 0.4;
       sim.viscosity_d = 0.4;
 
-      sim.end_frame = 240; // 设定结束的帧数
+      sim.end_frame = 300; // 设定结束的帧数
       sim.dx = 0.05;       //网格尺寸
       sim.gravity = TV(0, -9.8, 0);
 
@@ -809,21 +809,20 @@ public:
 
       // shear modulus in elasticity(G), aka viscosity(mu) in fluid, aka second
       // lame parameter.
-      float mu_Eq = 7.14 * 100;
-      float mu_nonEq = 35.7 * 100;
+      float mu_Eq = 7.14 * 200;
+      float mu_nonEq = 35.7 * 200;
 
+      // initialize empty particle handle for restarting
       {
-        // initialize empty particle handle for restarting
         MpmParticleHandleBase<T, dim> empty_particle_handle =
             init_helper.getZeroParticle();
 
         // equilibrated_model
         StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
-        // E=20, nu=0.4 transfer to lame: lambda 143, mu 36
-
+        // E=100, nu=0.4 transfer to lame: lambda 142.857, mu 35.714
         equilibrated_model.lambda *= 10;
-        // equilibrated_model.mu = mu_Eq;
-        equilibrated_model.mu *= 100.0;
+        equilibrated_model.mu = mu_Eq;
+        // equilibrated_model.mu *= 100.0;
 
         empty_particle_handle.addFBasedMpmForce(equilibrated_model);
 
@@ -833,8 +832,8 @@ public:
 
         // nonequilibrated_model
         StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4); // E and nu
-        // nonequilibrated_model.mu = mu_nonEq;
-        nonequilibrated_model.mu *= 100.0;
+        nonequilibrated_model.mu = mu_nonEq;
+        // nonequilibrated_model.mu *= 100.0;
 
         empty_particle_handle.addFElasticNonequilibratedBasedMpmForce(
             nonequilibrated_model, sim.viscosity_d, sim.viscosity_v);
@@ -852,22 +851,25 @@ public:
 
             // set equilibrated_model param
             StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
-
+            // E=100, nu=0.4 transfer to lame: lambda 142.857, mu 35.714
             equilibrated_model.lambda *= 10;
-            // equilibrated_model.mu = mu_Eq;
-            equilibrated_model.mu *= 100.0;
+            equilibrated_model.mu = mu_Eq;
+            // equilibrated_model.mu *= 100.0;
+            ZIRAN_INFO("lambda equilibrated: ", equilibrated_model.lambda);
+            ZIRAN_INFO("mu equilibrated: ", equilibrated_model.mu);
 
             source_particles_handle.addFBasedMpmForce(equilibrated_model);
-
             VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
-
             source_particles_handle.addPlasticity(equilibrated_model, p, "F");
 
             // nonequilibrated_model param
             StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
             // E=20, nu=0.4 transfer to lame: lambda 28.6, mu 7.14
-            // nonequilibrated_model.mu = mu_nonEq;
-            nonequilibrated_model.mu *= 100.0;
+            nonequilibrated_model.mu = mu_nonEq;
+            // nonequilibrated_model.mu *= 100.0;
+            ZIRAN_INFO("lambda nonequilibrated: ",
+                       nonequilibrated_model.lambda);
+            ZIRAN_INFO("mu nonequilibrated: ", nonequilibrated_model.mu);
 
             source_particles_handle.addFElasticNonequilibratedBasedMpmForce(
                 nonequilibrated_model, sim.viscosity_d, sim.viscosity_v);

@@ -1,2 +1,5 @@
 import subprocess
-subprocess.call(['python', 'Projects/admm/run.py', '-test', '8'])
+import os
+
+os.chdir("Projects/admm")
+subprocess.call(['python', 'run.py'])
