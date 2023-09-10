@@ -735,8 +735,8 @@ public:
     if (test_number == 9) {
       T p_E = 1e-4;
       sim.output_dir.path = "output/honey";
-      sim.viscosity_v = 50;
-      sim.viscosity_d = 50;
+      sim.viscosity_v = 500;
+      sim.viscosity_d = 500;
       sim.end_frame = 240;
       sim.dx = 0.05;
       sim.gravity = TV(0, -9.8, 0);
@@ -770,6 +770,25 @@ public:
           [&](T, AnalyticCollisionObject<T, dim> &) {}, ls,
           AnalyticCollisionObject<T, dim>::STICKY);
       init_helper.addAnalyticCollisionObject(ground);
+
+      // Setup collision object strawberry
+      VdbLevelSet<T, dim> strawberry_ls("LevelSets/strawberry.vdb");
+      auto strawberryTransform = [](T time,
+                                    AnalyticCollisionObject<T, dim> &object) {
+        TV translation_velocity(0, 0,
+                                0); // based on the partial derivatives of the
+                                    // parametric equations for this parabola
+        TV translation(0, 0, 0);    // multiply each velocity by dt to get dx!
+        object.setTranslation(translation, translation_velocity);
+        Vector<T, 3> omega(0, 0, 0);
+        object.setAngularVelocity(omega);
+      };
+
+      AnalyticCollisionObject<T, dim> strawberry_object(
+          strawberryTransform, strawberry_ls,
+          AnalyticCollisionObject<T, dim>::STICKY);
+      strawberry_object.setFriction(0.1);
+      init_helper.addAnalyticCollisionObject(strawberry_object);
 
       // create source collision object
       T rho = 2;
