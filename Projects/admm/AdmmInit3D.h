@@ -577,11 +577,12 @@ public:
     if (test_number == 7) {
       sim.output_dir.path = "output/cow";
       sim.end_frame = 100;
-      sim.dx = 0.02;
-      sim.gravity = 0 * TV::Unit(1);
-      sim.step.max_dt = sim.step.frame_dt / 12;
+      sim.dx = 0.01;
+      sim.gravity = sim.gravity = TV(0, -9.8, 0);
+      sim.step.frame_dt = 1.0e-4;
+      sim.step.max_dt = sim.step.frame_dt;
       sim.symplectic = false;
-      sim.cfl = 0.6;
+      sim.cfl = 1.0;
       sim.rho_scale = 1.0;
       sim.autorestart = false;
 
@@ -605,7 +606,7 @@ public:
         particles_handle.addPlasticity(model, p, "F");
         auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
           V = TV(0, 0, 1);
-          X -= TV(0, 0, 2);
+          // X -= TV(0, 0, 2);
         };
         particles_handle.transform(initial_translation);
       }
@@ -621,16 +622,9 @@ public:
         particles_handle.addPlasticity(model, p, "F");
       }
       { // floor
-        TV ground_origin(5, 4.86, 5);
+        // TV ground_origin(5, 4.86, 5);
+        TV ground_origin(0, 0, 0);
         TV ground_normal(0, 1, 0);
-        HalfSpace<T, dim> ground_ls(ground_origin, ground_normal);
-        AnalyticCollisionObject<T, dim> ground_object(
-            ground_ls, AnalyticCollisionObject<T, dim>::SLIP);
-        init_helper.addAnalyticCollisionObject(ground_object);
-      }
-      { // floor
-        TV ground_origin(5, 5, 6.4);
-        TV ground_normal(0, 0, -1);
         HalfSpace<T, dim> ground_ls(ground_origin, ground_normal);
         AnalyticCollisionObject<T, dim> ground_object(
             ground_ls, AnalyticCollisionObject<T, dim>::SLIP);
@@ -640,13 +634,14 @@ public:
 
     if (test_number == 8) {
       T p_E = 1e-4;
-      sim.output_dir.path = "output/cow2";
+      sim.output_dir.path = "output/cow";
       sim.viscosity_v = 0.4;
       sim.viscosity_d = 0.4;
       sim.end_frame = 100;
       sim.dx = 0.01;
-      sim.gravity = TV(0, -1, 0);
-      sim.step.max_dt = 5e-4;
+      sim.gravity = TV(0, -9.8, 0);
+      sim.step.frame_dt = 1.0 / 100.0;
+      sim.step.max_dt = 1e-4;
       sim.quasistatic = false;
       sim.symplectic = false;
       sim.objective.matrix_free = true;
@@ -668,7 +663,7 @@ public:
       sim.use_elasticity_plasticity = false;
 
       // ground is at 0
-      TV ground_origin(0, 4.5, 0);
+      TV ground_origin(0, 0, 0);
       TV ground_normal(0, 1, 0);
       HalfSpace<T, dim> ls(ground_origin, ground_normal);
       AnalyticCollisionObject<T, dim> ground(
@@ -680,11 +675,6 @@ public:
       T rho = 2;
       T E = 100;
       int ppc = 8;
-      //   Sphere<T, dim> sphere(TV(1, 1, 1), .03);
-      //   TV material_speed(0.0, -0.8, 0);
-      //   SourceCollisionObject<T, dim> sphere_source(sphere, material_speed);
-      //   int source_id = init_helper.addSourceCollisionObject(sphere_source);
-      //   init_helper.sampleSourceAtTheBeginning(source_id, rho, ppc);
 
       // initialize empty particle handle for restarting
       MpmParticleHandleBase<T, dim> empty_particle_handle =
@@ -712,6 +702,10 @@ public:
         StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
         particles_handle.addFElasticNonequilibratedBasedMpmForce(
             nonequilibrated_model, (T).4, (T).4);
+        auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
+          // X += TV(0, -0.18, 0);
+        };
+        particles_handle.transform(initial_translation);
       }
 
       //   sim.end_time_step_callbacks.push_back([this, source_id, rho, ppc, E,
