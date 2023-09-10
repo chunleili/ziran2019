@@ -735,13 +735,13 @@ public:
     if (test_number == 9) {
       T p_E = 1e-4;
       sim.output_dir.path = "output/honey";
-      sim.viscosity_v = 0.4;
-      sim.viscosity_d = 0.4;
+      sim.viscosity_v = 50;
+      sim.viscosity_d = 50;
       sim.end_frame = 240;
-      sim.dx = 0.01;
+      sim.dx = 0.05;
       sim.gravity = TV(0, -9.8, 0);
       sim.step.frame_dt = 1. / 25;
-      sim.step.max_dt = 5e-4;
+      sim.step.max_dt = 1e-3;
       sim.quasistatic = false;
       sim.symplectic = false;
       sim.objective.matrix_free = true;
@@ -775,8 +775,8 @@ public:
       T rho = 2;
       T E = 100;
       int ppc = 8;
-      Sphere<T, dim> sphere(TV(1, 5, 0.2), .03);
-      TV material_speed(0.0, 0, 0);
+      Sphere<T, dim> sphere(TV(1, 5, 1), .2);
+      TV material_speed(0.0, -1, 0);
       SourceCollisionObject<T, dim> sphere_source(sphere, material_speed);
       int source_id = init_helper.addSourceCollisionObject(sphere_source);
       init_helper.sampleSourceAtTheBeginning(source_id, rho, ppc);
