@@ -735,12 +735,16 @@ public:
     if (test_number == 9) {
       T p_E = 1e-4;
       sim.output_dir.path = "output/honey";
-      sim.viscosity_v = 500;
-      sim.viscosity_d = 500;
-      sim.end_frame = 240;
-      sim.dx = 0.05;
+
+      // viscosity_v and viscosity_d refer to fang19 Eq.8, Fig.15。
+      sim.viscosity_v = 0.4;
+      sim.viscosity_d = 0.4;
+
+      sim.end_frame = 240; // 设定结束的帧数
+      sim.dx = 0.05;       //网格尺寸
       sim.gravity = TV(0, -9.8, 0);
-      sim.step.frame_dt = 1. / 25;
+
+      sim.step.frame_dt = 1. / 25; // 设定输出的帧率
       sim.step.max_dt = 1e-3;
       sim.quasistatic = false;
       sim.symplectic = false;
@@ -772,23 +776,26 @@ public:
       init_helper.addAnalyticCollisionObject(ground);
 
       // Setup collision object strawberry
-      VdbLevelSet<T, dim> strawberry_ls("LevelSets/strawberry.vdb");
-      auto strawberryTransform = [](T time,
-                                    AnalyticCollisionObject<T, dim> &object) {
-        TV translation_velocity(0, 0,
-                                0); // based on the partial derivatives of the
-                                    // parametric equations for this parabola
-        TV translation(0, 0, 0);    // multiply each velocity by dt to get dx!
-        object.setTranslation(translation, translation_velocity);
-        Vector<T, 3> omega(0, 0, 0);
-        object.setAngularVelocity(omega);
-      };
+      {
+        VdbLevelSet<T, dim> strawberry_ls("LevelSets/strawberry.vdb");
+        auto strawberryTransform = [](T time,
+                                      AnalyticCollisionObject<T, dim> &object) {
+          TV translation_velocity(0, 0, 0);
+          TV translation(0, 0, 0);
+          object.setTranslation(translation, translation_velocity);
+          Vector<T, 3> omega(0, 0, 0);
+          object.setAngularVelocity(omega);
+        };
 
-      AnalyticCollisionObject<T, dim> strawberry_object(
-          strawberryTransform, strawberry_ls,
-          AnalyticCollisionObject<T, dim>::STICKY);
-      strawberry_object.setFriction(0.1);
-      init_helper.addAnalyticCollisionObject(strawberry_object);
+        AnalyticCollisionObject<T, dim> strawberry_object(
+            strawberryTransform, strawberry_ls,
+            AnalyticCollisionObject<T, dim>::STICKY);
+        // 对于STICKY来说，直接将速度设置为0。对于SLIP，根据friction设定。friction越大，速度损失越大。详情位于（Lib/Ziran/Math/Geometry/CollisionObject.cpp#L268）
+        // https://github.com/chunleili/ziran2019/blob/8d3d27cd17bbceab18c317820dbe595178f6312a/Lib/Ziran/Math/Geometry/CollisionObject.cpp#L268
+
+        // strawberry_object.setFriction(0.5);
+        init_helper.addAnalyticCollisionObject(strawberry_object);
+      }
 
       // create source collision object
       T rho = 2;
@@ -800,34 +807,70 @@ public:
       int source_id = init_helper.addSourceCollisionObject(sphere_source);
       init_helper.sampleSourceAtTheBeginning(source_id, rho, ppc);
 
-      // initialize empty particle handle for restarting
-      MpmParticleHandleBase<T, dim> empty_particle_handle =
-          init_helper.getZeroParticle();
-      StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
-      equilibrated_model.lambda *= 10;
-      empty_particle_handle.addFBasedMpmForce(equilibrated_model);
-      VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
-      empty_particle_handle.addPlasticity(equilibrated_model, p, "F");
-      StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
-      empty_particle_handle.addFElasticNonequilibratedBasedMpmForce(
-          nonequilibrated_model, (T).4, (T).4);
+      // shear modulus in elasticity(G), aka viscosity(mu) in fluid, aka second
+      // lame parameter.
+      float mu_Eq = 7.14 * 100;
+      float mu_nonEq = 35.7 * 100;
 
-      sim.end_time_step_callbacks.push_back([this, source_id, rho, ppc, E,
-                                             p_E](int frame, int substep) {
+      {
+        // initialize empty particle handle for restarting
+        MpmParticleHandleBase<T, dim> empty_particle_handle =
+            init_helper.getZeroParticle();
+
+        // equilibrated_model
+        StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
+        // E=20, nu=0.4 transfer to lame: lambda 143, mu 36
+
+        equilibrated_model.lambda *= 10;
+        // equilibrated_model.mu = mu_Eq;
+        equilibrated_model.mu *= 100.0;
+
+        empty_particle_handle.addFBasedMpmForce(equilibrated_model);
+
+        VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
+
+        empty_particle_handle.addPlasticity(equilibrated_model, p, "F");
+
+        // nonequilibrated_model
+        StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4); // E and nu
+        // nonequilibrated_model.mu = mu_nonEq;
+        nonequilibrated_model.mu *= 100.0;
+
+        empty_particle_handle.addFElasticNonequilibratedBasedMpmForce(
+            nonequilibrated_model, sim.viscosity_d, sim.viscosity_v);
+      }
+
+      sim.end_time_step_callbacks.push_back([this, source_id, rho, ppc, E, p_E,
+                                             mu_nonEq,
+                                             mu_Eq](int frame, int substep) {
         if (frame < 2400) {
           // add more particles from source Collision object
           int N = init_helper.sourceSampleAndPrune(source_id, rho, ppc);
           if (N) {
             MpmParticleHandleBase<T, dim> source_particles_handle =
                 init_helper.getParticlesFromSource(source_id, rho, ppc);
+
+            // set equilibrated_model param
             StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
+
             equilibrated_model.lambda *= 10;
+            // equilibrated_model.mu = mu_Eq;
+            equilibrated_model.mu *= 100.0;
+
             source_particles_handle.addFBasedMpmForce(equilibrated_model);
+
             VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
+
             source_particles_handle.addPlasticity(equilibrated_model, p, "F");
+
+            // nonequilibrated_model param
             StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
+            // E=20, nu=0.4 transfer to lame: lambda 28.6, mu 7.14
+            // nonequilibrated_model.mu = mu_nonEq;
+            nonequilibrated_model.mu *= 100.0;
+
             source_particles_handle.addFElasticNonequilibratedBasedMpmForce(
-                nonequilibrated_model, (T).4, (T).4);
+                nonequilibrated_model, sim.viscosity_d, sim.viscosity_v);
           }
         }
       });
