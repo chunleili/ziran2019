@@ -637,11 +637,11 @@ public:
       sim.output_dir.path = "output/cow";
       sim.viscosity_v = 0.4;
       sim.viscosity_d = 0.4;
-      sim.end_frame = 100;
+      sim.end_frame = 300;
       sim.dx = 0.01;
       sim.gravity = TV(0, -9.8, 0);
-      sim.step.frame_dt = 1.0 / 100.0;
-      sim.step.max_dt = 1e-4;
+      sim.step.frame_dt = 1.0 / 24.0;
+      sim.step.max_dt = 1e-3;
       sim.quasistatic = false;
       sim.symplectic = false;
       sim.objective.matrix_free = true;
@@ -676,12 +676,15 @@ public:
       T E = 100;
       int ppc = 8;
 
+      /* ---------------------------------- 设置物理参数
+       * ---------------------------------- */
       // initialize empty particle handle for restarting
       MpmParticleHandleBase<T, dim> empty_particle_handle =
           init_helper.getZeroParticle();
       StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
       equilibrated_model.lambda *= 10;
       empty_particle_handle.addFBasedMpmForce(equilibrated_model);
+
       VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
       empty_particle_handle.addPlasticity(equilibrated_model, p, "F");
       StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
@@ -696,38 +699,28 @@ public:
                 meshed_points, "LevelSets/cow.vdb", 2, 8);
         StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
         equilibrated_model.lambda *= 10;
+        equilibrated_model.mu *= 10.0;
+        ZIRAN_INFO("Eq mu", equilibrated_model.mu);
+        ZIRAN_INFO("Eq lambda", equilibrated_model.lambda);
+
         particles_handle.addFBasedMpmForce(equilibrated_model);
         VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
         particles_handle.addPlasticity(equilibrated_model, p, "F");
         StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
         particles_handle.addFElasticNonequilibratedBasedMpmForce(
             nonequilibrated_model, (T).4, (T).4);
+        nonequilibrated_model.mu = 5000;
+        ZIRAN_INFO("NonEq mu", nonequilibrated_model.mu);
+        ZIRAN_INFO("NonEq lambda", nonequilibrated_model.lambda);
+
+        // 向上抬升5dx,因为地板的厚度。
         auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
-          // X += TV(0, -0.18, 0);
+          X += TV(0, 5 * sim.dx, 0);
         };
         particles_handle.transform(initial_translation);
       }
-
-      //   sim.end_time_step_callbacks.push_back([this, source_id, rho, ppc, E,
-      //                                          p_E](int frame, int substep) {
-      //     if (frame < 2400) {
-      //       // add more particles from source Collision object
-      //       int N = init_helper.sourceSampleAndPrune(source_id, rho, ppc);
-      //       if (N) {
-      //         MpmParticleHandleBase<T, dim> source_particles_handle =
-      //             init_helper.getParticlesFromSource(source_id, rho, ppc);
-      //         StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
-      //         equilibrated_model.lambda *= 10;
-      //         source_particles_handle.addFBasedMpmForce(equilibrated_model);
-      //         VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
-      //         source_particles_handle.addPlasticity(equilibrated_model, p,
-      //         "F"); StvkWithHencky<T, dim> nonequilibrated_model(E * .2,
-      //         0.4);
-      //         source_particles_handle.addFElasticNonequilibratedBasedMpmForce(
-      //             nonequilibrated_model, (T).4, (T).4);
-      //       }
-      //     }
-      //   });
+      /* -------------------------------- 结束设置物理参数
+       * -------------------------------- */
     }
 
     // honey stawberry
@@ -740,7 +733,7 @@ public:
       sim.viscosity_v = 0.4;
       sim.viscosity_d = 0.4;
 
-      sim.end_frame = 300; // 设定结束的帧数
+      sim.end_frame = 200; // 设定结束的帧数
       sim.dx = 0.05;       //网格尺寸
       sim.gravity = TV(0, -9.8, 0);
 
