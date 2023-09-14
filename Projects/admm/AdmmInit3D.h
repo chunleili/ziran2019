@@ -606,21 +606,10 @@ public:
         particles_handle.addPlasticity(model, p, "F");
         auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
           V = TV(0, 0, 1);
-          // X -= TV(0, 0, 2);
         };
         particles_handle.transform(initial_translation);
       }
-      {
-        StdVector<TV> meshed_points;
-        readPositionObj("car_right.obj", meshed_points);
-        MpmParticleHandleBase<T, dim> particles_handle =
-            init_helper.sampleFromVdbFileWithExistingPoints(
-                meshed_points, "LevelSets/car_right.vdb", 2, 8);
-        StvkWithHencky<T, dim> model(2000, 0.4);
-        particles_handle.addFBasedMpmForce(model);
-        VonMisesStvkHencky<T, dim> p(2, FLT_MAX, 0);
-        particles_handle.addPlasticity(model, p, "F");
-      }
+
       { // floor
         // TV ground_origin(5, 4.86, 5);
         TV ground_origin(0, 0, 0);
@@ -634,13 +623,13 @@ public:
 
     if (test_number == 8) {
       T p_E = 1e-4;
-      sim.output_dir.path = "output/cow";
+      sim.output_dir.path = "output/cow0915";
       sim.viscosity_v = 0.4;
       sim.viscosity_d = 0.4;
-      sim.end_frame = 300;
+      sim.end_frame = 10;
       sim.dx = 0.01;
       sim.gravity = TV(0, -9.8, 0);
-      sim.step.frame_dt = 1.0 / 24.0;
+      sim.step.frame_dt = 1.0 / 25;
       sim.step.max_dt = 1e-3;
       sim.quasistatic = false;
       sim.symplectic = false;
@@ -693,15 +682,13 @@ public:
 
       {
         StdVector<TV> meshed_points;
-        readPositionObj("cow.obj", meshed_points);
+        // readPositionObj("cow.obj", meshed_points);
         MpmParticleHandleBase<T, dim> particles_handle =
             init_helper.sampleFromVdbFileWithExistingPoints(
                 meshed_points, "LevelSets/cow.vdb", 2, 8);
         StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
-        equilibrated_model.lambda *= 10;
-        equilibrated_model.mu *= 10.0;
-        ZIRAN_INFO("Eq mu", equilibrated_model.mu);
-        ZIRAN_INFO("Eq lambda", equilibrated_model.lambda);
+        equilibrated_model.lambda *= 100;
+        equilibrated_model.mu *= 100;
 
         particles_handle.addFBasedMpmForce(equilibrated_model);
         VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
@@ -709,9 +696,8 @@ public:
         StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
         particles_handle.addFElasticNonequilibratedBasedMpmForce(
             nonequilibrated_model, (T).4, (T).4);
-        nonequilibrated_model.mu = 5000;
-        ZIRAN_INFO("NonEq mu", nonequilibrated_model.mu);
-        ZIRAN_INFO("NonEq lambda", nonequilibrated_model.lambda);
+        nonequilibrated_model.mu *= 100;
+        nonequilibrated_model.lambda *= 100;
 
         // 向上抬升5dx,因为地板的厚度。
         auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
@@ -721,6 +707,19 @@ public:
       }
       /* -------------------------------- 结束设置物理参数
        * -------------------------------- */
+
+      float mu_e = equilibrated_model.mu;
+      float lambda_e = equilibrated_model.lambda;
+      float mu_ne = nonequilibrated_model.mu;
+      float lambda_ne = nonequilibrated_model.lambda;
+
+      sim.end_time_step_callbacks.push_back(
+          [this, mu_e, lambda_e, mu_ne, lambda_ne](int frame, int substep) {
+            ZIRAN_INFO("Eq mu", mu_e);
+            ZIRAN_INFO("Eq lambda", lambda_e);
+            ZIRAN_INFO("NonEq mu", mu_ne);
+            ZIRAN_INFO("NonEq lambda", lambda_ne);
+          });
     }
 
     // honey stawberry
