@@ -1,5 +1,0 @@
-{
-    "cmake.debugConfig": {
-    "args": ["-test", "1"]
-}
-}

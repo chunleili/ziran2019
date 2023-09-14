@@ -12,34 +12,29 @@ class PluginManager;
 
 class ZIRAN_EXPORT PluginBase {
 public:
-    PluginBase() {}
-    virtual ~PluginBase() {}
-    virtual void registerFactories(PluginManager& manager) = 0;
+  PluginBase() {}
+  virtual ~PluginBase() {}
+  virtual void registerFactories(PluginManager &manager) = 0;
 };
 
 // Plugin details structure that's exposed to the application.
 struct PluginDetails {
-    int apiVersion;
-    const char* fileName;
-    const char* className;
-    const char* pluginVersion;
-    PluginBase* (*initializeFunc)();
+  int apiVersion;
+  const char *fileName;
+  const char *className;
+  const char *pluginVersion;
+  PluginBase *(*initializeFunc)();
 };
 
-#define ZIRAN_PLUGIN(classType, pluginVersion)       \
-    extern "C" {                                     \
-    ZIRAN_EXPORT ZIRAN::PluginBase* get##classType() \
-    {                                                \
-        static classType singleton;                  \
-        return &singleton;                           \
-    }                                                \
-    ZIRAN_EXPORT ZIRAN::PluginDetails exports = {    \
-        ZIRAN_PLUGIN_API_VERSION,                    \
-        __FILE__,                                    \
-        #classType,                                  \
-        pluginVersion,                               \
-        get##classType                               \
-    };                                               \
-    }
+#define ZIRAN_PLUGIN(classType, pluginVersion)                                 \
+  extern "C" {                                                                 \
+  ZIRAN_EXPORT ZIRAN::PluginBase *get##classType() {                           \
+    static classType singleton;                                                \
+    return &singleton;                                                         \
+  }                                                                            \
+  ZIRAN_EXPORT ZIRAN::PluginDetails exports = {ZIRAN_PLUGIN_API_VERSION,       \
+                                               __FILE__, #classType,           \
+                                               pluginVersion, get##classType}; \
+  }
 } // namespace ZIRAN
 #endif

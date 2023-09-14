@@ -4,9 +4,11 @@
 namespace ZIRAN {
 
 // Generate voronoi noise
-float voronoiDistance(const Vector<float, 3>& x, const Vector<int, 3>& seed = Vector<int, 3>::Zero());
+float voronoiDistance(const Vector<float, 3> &x,
+                      const Vector<int, 3> &seed = Vector<int, 3>::Zero());
 
 // Generate voronoi noise
-float voronoiDistance(const Vector<float, 2>& x, const Vector<int, 2>& seed = Vector<int, 2>::Zero());
+float voronoiDistance(const Vector<float, 2> &x,
+                      const Vector<int, 2> &seed = Vector<int, 2>::Zero());
 } // namespace ZIRAN
 #endif

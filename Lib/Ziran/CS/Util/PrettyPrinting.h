@@ -1,8 +1,8 @@
 #ifndef PRETTY_PRINTING
 #define PRETTY_PRINTING
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <string>
 
 namespace ZIRAN {
@@ -29,34 +29,34 @@ namespace ZIRAN {
  * RESET - Reset to default
  */
 enum class Color {
-    BLACK,
-    BLUE,
-    GREEN,
-    CYAN,
-    RED,
-    MAGENTA,
-    BROWN,
-    GREY,
-    DARKGREY,
-    LIGHTBLUE,
-    LIGHTGREEN,
-    LIGHTCYAN,
-    LIGHTRED,
-    LIGHTMAGENTA,
-    YELLOW,
-    WHITE,
-    RESET,
-    NOCHANGE
+  BLACK,
+  BLUE,
+  GREEN,
+  CYAN,
+  RED,
+  MAGENTA,
+  BROWN,
+  GREY,
+  DARKGREY,
+  LIGHTBLUE,
+  LIGHTGREEN,
+  LIGHTCYAN,
+  LIGHTRED,
+  LIGHTMAGENTA,
+  YELLOW,
+  WHITE,
+  RESET,
+  NOCHANGE
 };
 
 /**
  * Consts: ANSI escape strings
  *
  * ANSI_CLS                - Clears screen
- * ANSI_CONSOLE_TITLE_PRE  - Prefix for changing the window title, print the window title in between
- * ANSI_CONSOLE_TITLE_POST - Suffix for changing the window title, print the window title in between
- * ANSI_ATTRIBUTE_RESET    - Resets all attributes
- * ANSI_CURSOR_HIDE        - Hides the cursor
+ * ANSI_CONSOLE_TITLE_PRE  - Prefix for changing the window title, print the
+ * window title in between ANSI_CONSOLE_TITLE_POST - Suffix for changing the
+ * window title, print the window title in between ANSI_ATTRIBUTE_RESET    -
+ * Resets all attributes ANSI_CURSOR_HIDE        - Hides the cursor
  * ANSI_CURSOR_SHOW        - Shows the cursor
  * ANSI_CURSOR_HOME        - Moves the cursor home (0,0)
  * ANSI_BLACK              - Black
@@ -85,28 +85,28 @@ enum class Color {
  * ANSI_BACKGROUND_WHITE   - White background
  */
 // Remaining colors not supported as background colors
-std::ostream& operator<<(std::ostream& os, const Color& c);
+std::ostream &operator<<(std::ostream &os, const Color &c);
 
-std::string stripColors(const std::string& s);
+std::string stripColors(const std::string &s);
 
 struct SetColor {
-    Color fg, bg;
+  Color fg, bg;
 
-    SetColor(Color fg, Color bg = Color::NOCHANGE);
+  SetColor(Color fg, Color bg = Color::NOCHANGE);
 
-    std::ostream& operator()(std::ostream& os) const;
+  std::ostream &operator()(std::ostream &os) const;
 
-    std::ostream& setForegroundColor(std::ostream& os) const;
+  std::ostream &setForegroundColor(std::ostream &os) const;
 
-    std::ostream& setBackgroundColor(std::ostream& os) const;
+  std::ostream &setBackgroundColor(std::ostream &os) const;
 };
 
-std::ostream& operator<<(std::ostream& os, const SetColor& p);
+std::ostream &operator<<(std::ostream &os, const SetColor &p);
 
 // Needed for the windows console to support ansi color codes
 int initializeColors();
 
-std::string setConsoleTitle(const std::string& title);
+std::string setConsoleTitle(const std::string &title);
 
 std::string setCursorVisiblity(bool visible);
 
@@ -120,25 +120,25 @@ std::string moveCursorRelative(int lines_down, int columns_right);
 
 std::string clearScreen();
 
-void getTerminalSize(int& lines, int& columns);
+void getTerminalSize(int &lines, int &columns);
 
 struct ProgressBar {
-    double progress;
-    int barWidth;
-    std::string tail;
-    ProgressBar(double progress, const std::string& tail = "", int barWidth = 73);
-    std::ostream& operator()(std::ostream& os) const;
+  double progress;
+  int barWidth;
+  std::string tail;
+  ProgressBar(double progress, const std::string &tail = "", int barWidth = 73);
+  std::ostream &operator()(std::ostream &os) const;
 };
 
-std::ostream& operator<<(std::ostream& os, const ProgressBar& p);
+std::ostream &operator<<(std::ostream &os, const ProgressBar &p);
 
 struct PrettyPrintDuration {
-    std::chrono::duration<double> elapsed_seconds;
-    PrettyPrintDuration(std::chrono::duration<double> elapsed_seconds);
+  std::chrono::duration<double> elapsed_seconds;
+  PrettyPrintDuration(std::chrono::duration<double> elapsed_seconds);
 
-    std::ostream& operator()(std::ostream& os) const;
+  std::ostream &operator()(std::ostream &os) const;
 };
 
-std::ostream& operator<<(std::ostream& os, const PrettyPrintDuration& p);
+std::ostream &operator<<(std::ostream &os, const PrettyPrintDuration &p);
 } // namespace ZIRAN
 #endif /* ifndef PRETTY_PRINTING */

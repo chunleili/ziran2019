@@ -8,12 +8,12 @@
 
 namespace ZIRAN {
 struct Signal {
-    int number;
+  int number;
 };
 
-std::atomic<uint64_t>& firstExit();
+std::atomic<uint64_t> &firstExit();
 
-std::atomic<int>& exitSignalNumber();
+std::atomic<int> &exitSignalNumber();
 
 std::thread::id exitingThreadId();
 
@@ -37,20 +37,15 @@ void exitWithDefaultSignalHandler(Signal signal);
 std::string exitReasonName(Signal signal);
 
 struct SignalBlocker {
-    sigset_t set;
+  sigset_t set;
 
-    template <class... SignalNumber>
-    SignalBlocker(SignalNumber... s)
-    {
-        sigemptyset(&set);
-        Call{ sigaddset(&set, s)... };
-        pthread_sigmask(SIG_BLOCK, &set, NULL);
-    }
+  template <class... SignalNumber> SignalBlocker(SignalNumber... s) {
+    sigemptyset(&set);
+    Call{sigaddset(&set, s)...};
+    pthread_sigmask(SIG_BLOCK, &set, NULL);
+  }
 
-    ~SignalBlocker()
-    {
-        pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-    }
+  ~SignalBlocker() { pthread_sigmask(SIG_UNBLOCK, &set, NULL); }
 };
 } // namespace ZIRAN
 #endif

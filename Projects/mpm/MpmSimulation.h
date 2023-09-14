@@ -8,14 +8,11 @@ namespace ZIRAN {
 template <class T, int _dim>
 class MpmSimulation : public MpmSimulationBase<T, _dim> {
 public:
-    using Base = MpmSimulationBase<T, _dim>;
+  using Base = MpmSimulationBase<T, _dim>;
 
-    MpmSimulation()
-        : Base()
-    {
-    }
+  MpmSimulation() : Base() {}
 
-    const char* name() override { return "mpm"; }
+  const char *name() override { return "mpm"; }
 };
 } // namespace ZIRAN
 

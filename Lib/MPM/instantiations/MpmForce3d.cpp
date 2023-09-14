@@ -1,5 +1,5 @@
-#include <Ziran/CS/Util/PlatformSpecific.h>
 #include "../Force/MpmForceBase.cpp"
+#include <Ziran/CS/Util/PlatformSpecific.h>
 namespace ZIRAN {
 template class MpmForceBase<double, 3>;
 }

@@ -5,6 +5,7 @@
 namespace ZIRAN {
 
 template <class T, int dim>
-void readUrjcKnitData(const std::string& filename, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 2>>& segments);
+void readUrjcKnitData(const std::string &filename, StdVector<Vector<T, dim>> &X,
+                      StdVector<Vector<int, 2>> &segments);
 }
 #endif

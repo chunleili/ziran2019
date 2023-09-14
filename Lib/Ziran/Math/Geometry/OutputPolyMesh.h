@@ -9,12 +9,12 @@ namespace ZIRAN {
 // outputting to a file
 // It is not templatized instead it assumes 3d and float
 struct OutputPolyMesh {
-    const float* positions; //size 3*num_points
-    size_t num_points;
-    const int32_t* vertices; //size num_vertices
-    size_t num_vertices;
-    const int32_t* face_vertex_counts; // size num_faces
-    size_t num_faces;
+  const float *positions; // size 3*num_points
+  size_t num_points;
+  const int32_t *vertices; // size num_vertices
+  size_t num_vertices;
+  const int32_t *face_vertex_counts; // size num_faces
+  size_t num_faces;
 };
 } // namespace ZIRAN
 #endif

@@ -5,9 +5,13 @@
 namespace ZIRAN {
 
 template <class T, int dim>
-void readUscHairData(std::istream& in, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 2>>& segments, const T percentage_to_keep);
+void readUscHairData(std::istream &in, StdVector<Vector<T, dim>> &X,
+                     StdVector<Vector<int, 2>> &segments,
+                     const T percentage_to_keep);
 
 template <class T, int dim>
-void readUscHairData(const std::string& filename, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 2>>& segments, const T percentage_to_keep = 1);
+void readUscHairData(const std::string &filename, StdVector<Vector<T, dim>> &X,
+                     StdVector<Vector<int, 2>> &segments,
+                     const T percentage_to_keep = 1);
 } // namespace ZIRAN
 #endif

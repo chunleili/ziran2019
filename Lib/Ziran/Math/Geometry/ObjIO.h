@@ -1,69 +1,72 @@
 #ifndef OBJ_IO_H
 #define OBJ_IO_H
 
-#include <vector>
+#include <Ziran/CS/Util/Forward.h>
 #include <fstream>
 #include <string>
-#include <Ziran/CS/Util/Forward.h>
+#include <vector>
 
 namespace ZIRAN {
-template <class T, int dim>
-class Particles;
+template <class T, int dim> class Particles;
 /**
     Read points data from obj file (3d) to std::vector (either 2d or 3d).
     The Z value will be ignored if 2D.
 */
 template <class T, int dim>
-void readPositionObj(std::istream& in, StdVector<Vector<T, dim>>& X);
+void readPositionObj(std::istream &in, StdVector<Vector<T, dim>> &X);
 
 /**
     Read points data from obj file (3d) to std::vector (either 2d or 3d).
     The Z value will be ignored if 2D.
 */
 template <class T, int dim>
-void readPositionObj(const std::string& position_file, StdVector<Vector<T, dim>>& X);
+void readPositionObj(const std::string &position_file,
+                     StdVector<Vector<T, dim>> &X);
 
 /**
     Write points data from std::vector (either 2d or 3d) to obj file (3d).
     The Z value will be 0 if 2D.
 */
 template <class T, int dim>
-void writePositionObj(std::ostream& os, const StdVector<Vector<T, dim>>& X);
+void writePositionObj(std::ostream &os, const StdVector<Vector<T, dim>> &X);
 
 /**
     Write points data from std::vector (either 2d or 3d) to obj file (3d).
     The Z value will be 0 if 2D.
 */
 template <class T, int dim>
-void writePositionObj(const std::string& filename, const StdVector<Vector<T, dim>>& X);
+void writePositionObj(const std::string &filename,
+                      const StdVector<Vector<T, dim>> &X);
 
 /**
     Read points data from obj file (3d) to ZIRAN:Particles (either 2d or 3d).
     The Z value will be ignored if ZIRAN:Particles is 2D.
 */
 template <class T, int dim>
-void readParticleObj(std::istream& in, Particles<T, dim>& particles);
+void readParticleObj(std::istream &in, Particles<T, dim> &particles);
 
 /**
     Read points data from obj file (3d) to ZIRAN:Particles (either 2d or 3d).
     The Z value will be ignored if ZIRAN:Particles is 2D.
 */
 template <class T, int dim>
-void readParticleObj(const std::string& particle_file, Particles<T, dim>& particles);
+void readParticleObj(const std::string &particle_file,
+                     Particles<T, dim> &particles);
 
 /**
     Write points data from ZIRAN:Particles (either 2d or 3d) to obj file (3d).
     The Z value will be 0 if ZIRAN:Particles is 2D.
 */
 template <class T, int dim>
-void writeParticleObj(std::ostream& os, const Particles<T, dim>& particles);
+void writeParticleObj(std::ostream &os, const Particles<T, dim> &particles);
 
 /**
     Write points data from ZIRAN:Particles (either 2d or 3d) to obj file (3d).
     The Z value will be 0 if ZIRAN:Particles is 2D.
 */
 template <class T, int dim>
-void writeParticleObj(const std::string& filename, const Particles<T, dim>& particles);
+void writeParticleObj(const std::string &filename,
+                      const Particles<T, dim> &particles);
 
 /**
     Write just the faces out in obj format.
@@ -71,7 +74,8 @@ void writeParticleObj(const std::string& filename, const Particles<T, dim>& part
     \param[in] triangles the list of triangles.
 */
 template <int vertex_per_face>
-void writeFacesObj(std::ostream& os, const StdVector<Vector<int, vertex_per_face>>& faces);
+void writeFacesObj(std::ostream &os,
+                   const StdVector<Vector<int, vertex_per_face>> &faces);
 
 /**
     Read a triangle mesh.
@@ -80,7 +84,8 @@ void writeFacesObj(std::ostream& os, const StdVector<Vector<int, vertex_per_face
     \param[in] triangles the list of triangles.
 */
 template <class T, int dim>
-void readTrimeshObj(std::istream& is, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 3>>& triangles);
+void readTrimeshObj(std::istream &is, StdVector<Vector<T, dim>> &X,
+                    StdVector<Vector<int, 3>> &triangles);
 
 /**
     Read a triangle mesh.
@@ -89,7 +94,9 @@ void readTrimeshObj(std::istream& is, StdVector<Vector<T, dim>>& X, StdVector<Ve
     \param[in] triangles the list of triangles.
 */
 template <class T, int dim>
-void readTrimeshObj(const std::string& particle_file, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 3>>& triangles);
+void readTrimeshObj(const std::string &particle_file,
+                    StdVector<Vector<T, dim>> &X,
+                    StdVector<Vector<int, 3>> &triangles);
 
 /**
     Write to a 3D triangle mesh.
@@ -100,7 +107,8 @@ void readTrimeshObj(const std::string& particle_file, StdVector<Vector<T, dim>>&
     The Z value will be 0 if the points are 2D.
 */
 template <class T, int dim>
-void writeTrimeshObj(std::ostream& os, const StdVector<Vector<T, dim>>& X, const StdVector<Vector<int, 3>>& triangles);
+void writeTrimeshObj(std::ostream &os, const StdVector<Vector<T, dim>> &X,
+                     const StdVector<Vector<int, 3>> &triangles);
 
 /**
     Write to a 3D triangle mesh.
@@ -111,7 +119,9 @@ void writeTrimeshObj(std::ostream& os, const StdVector<Vector<T, dim>>& X, const
     The Z value will be 0 if the points are 2D.
 */
 template <class T, int dim>
-void writeTrimeshObj(const std::string& filename, const StdVector<Vector<T, dim>>& X, const StdVector<Vector<int, 3>>& triangles);
+void writeTrimeshObj(const std::string &filename,
+                     const StdVector<Vector<T, dim>> &X,
+                     const StdVector<Vector<int, 3>> &triangles);
 
 /**
     Read a quadrilateral mesh.
@@ -120,7 +130,8 @@ void writeTrimeshObj(const std::string& filename, const StdVector<Vector<T, dim>
     \param[in] quads the list of quadrilaterals.
 */
 template <class T, int dim>
-void readQuadmeshObj(std::istream& is, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 4>>& quads);
+void readQuadmeshObj(std::istream &is, StdVector<Vector<T, dim>> &X,
+                     StdVector<Vector<int, 4>> &quads);
 
 /**
     Read a quadrilateral mesh.
@@ -129,7 +140,9 @@ void readQuadmeshObj(std::istream& is, StdVector<Vector<T, dim>>& X, StdVector<V
     \param[in] quads the list of quadrilaterals.
 */
 template <class T, int dim>
-void readQuadmeshObj(const std::string& particle_file, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 4>>& quads);
+void readQuadmeshObj(const std::string &particle_file,
+                     StdVector<Vector<T, dim>> &X,
+                     StdVector<Vector<int, 4>> &quads);
 
 /**
     Write to a 3D quadrilateral mesh.
@@ -140,7 +153,8 @@ void readQuadmeshObj(const std::string& particle_file, StdVector<Vector<T, dim>>
     The Z value will be 0 if the points are 2D.
 */
 template <class T, int dim>
-void writeQuadmeshObj(std::ostream& os, const StdVector<Vector<T, dim>>& X, const StdVector<Vector<int, 4>>& quads);
+void writeQuadmeshObj(std::ostream &os, const StdVector<Vector<T, dim>> &X,
+                      const StdVector<Vector<int, 4>> &quads);
 
 /**
     Write to a 3D quadrilateral mesh.
@@ -151,6 +165,8 @@ void writeQuadmeshObj(std::ostream& os, const StdVector<Vector<T, dim>>& X, cons
     The Z value will be 0 if the points are 2D.
 */
 template <class T, int dim>
-void writeQuadmeshObj(const std::string& filename, const StdVector<Vector<T, dim>>& X, const StdVector<Vector<int, 4>>& quads);
+void writeQuadmeshObj(const std::string &filename,
+                      const StdVector<Vector<T, dim>> &X,
+                      const StdVector<Vector<int, 4>> &quads);
 }; // namespace ZIRAN
 #endif

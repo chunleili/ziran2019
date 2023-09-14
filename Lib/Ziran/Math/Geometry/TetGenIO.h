@@ -4,6 +4,6 @@
 
 namespace ZIRAN {
 template <class T, int dim>
-void writeNode(std::ostream& out, const StdVector<Vector<T, dim>>& X);
+void writeNode(std::ostream &out, const StdVector<Vector<T, dim>> &X);
 }
 #endif

@@ -2,14 +2,14 @@
 #define SHARED_LIBRARY_H
 namespace ZIRAN {
 class SharedLibrary {
-    void* m_shared_library;
+  void *m_shared_library;
 
 public:
-    SharedLibrary(const char* path);
+  SharedLibrary(const char *path);
 
-    ~SharedLibrary();
+  ~SharedLibrary();
 
-    void sym(const char* name, void** symbol);
+  void sym(const char *name, void **symbol);
 };
 } // namespace ZIRAN
 #endif

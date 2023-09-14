@@ -1,50 +1,47 @@
 #ifndef ADMM_FORMULA_H
 #define ADMM_FORMULA_H
 
-#include <Ziran/CS/Util/Forward.h>
 #include <Eigen/Eigenvalues>
+#include <Ziran/CS/Util/Forward.h>
 
 namespace ZIRAN {
 
 #define TV Vector<T, dim>
 #define TM Matrix<T, dim, dim>
 
-template <class T, int dim>
-TM makePD(const TM& symMtr)
-{
-    Eigen::SelfAdjointEigenSolver<TM> eigenSolver(symMtr);
-    TV D(eigenSolver.eigenvalues());
-    for (int i = 0; i < dim; i++) {
-        if (D[i] < 0.0) {
-            D[i] = 0.0;
-        }
+template <class T, int dim> TM makePD(const TM &symMtr) {
+  Eigen::SelfAdjointEigenSolver<TM> eigenSolver(symMtr);
+  TV D(eigenSolver.eigenvalues());
+  for (int i = 0; i < dim; i++) {
+    if (D[i] < 0.0) {
+      D[i] = 0.0;
     }
-    return eigenSolver.eigenvectors() * D.asDiagonal() * eigenSolver.eigenvectors().transpose();
+  }
+  return eigenSolver.eigenvectors() * D.asDiagonal() *
+         eigenSolver.eigenvectors().transpose();
 };
 
-template <class T>
-Matrix<T, 2, 2> makePD2D(const Matrix<T, 2, 2>& symMtr)
-{
-    Eigen::SelfAdjointEigenSolver<Matrix<T, 2, 2>> eigenSolver(symMtr);
-    Vector<T, 2> D(eigenSolver.eigenvalues());
-    for (int i = 0; i < 2; i++) {
-        if (D[i] < 0.0)
-            D[i] = 0.0;
-    }
-    return eigenSolver.eigenvectors() * D.asDiagonal() * eigenSolver.eigenvectors().transpose();
+template <class T> Matrix<T, 2, 2> makePD2D(const Matrix<T, 2, 2> &symMtr) {
+  Eigen::SelfAdjointEigenSolver<Matrix<T, 2, 2>> eigenSolver(symMtr);
+  Vector<T, 2> D(eigenSolver.eigenvalues());
+  for (int i = 0; i < 2; i++) {
+    if (D[i] < 0.0)
+      D[i] = 0.0;
+  }
+  return eigenSolver.eigenvectors() * D.asDiagonal() *
+         eigenSolver.eigenvectors().transpose();
 };
 
-void outputResidual(double a, double b)
-{
-    static bool first_line_output = true;
-    if (first_line_output) {
-        FILE* f = fopen("output/residual.txt", "w");
-        fclose(f);
-        first_line_output = false;
-    }
-    FILE* f = fopen("output/residual.txt", "a");
-    fprintf(f, "%.10lf %.10lf\n", a, b);
+void outputResidual(double a, double b) {
+  static bool first_line_output = true;
+  if (first_line_output) {
+    FILE *f = fopen("output/residual.txt", "w");
     fclose(f);
+    first_line_output = false;
+  }
+  FILE *f = fopen("output/residual.txt", "a");
+  fprintf(f, "%.10lf %.10lf\n", a, b);
+  fclose(f);
 }
 
 #undef TV
@@ -84,34 +81,36 @@ void outputGlobalOOT()
         });
         for (int i = 0; i < (int)div_nodes.size(); ++i) {
             uint64_t offset00 = div_nodes[i];
-            uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-            uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-            uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
-            auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
-            auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
-            auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
-            auto& g11 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset11));
-            T tmp = x(i) / (T)2 / dx;
-            g00.new_v += TV(-tmp, -tmp).cwiseProduct(Q[g00.idx]);
-            g10.new_v += TV(tmp, -tmp).cwiseProduct(Q[g10.idx]);
-            g01.new_v += TV(-tmp, tmp).cwiseProduct(Q[g01.idx]);
-            g11.new_v += TV(tmp, tmp).cwiseProduct(Q[g11.idx]);
+            uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+            auto& g00 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset00)); auto& g10 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset10)); auto& g01 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset01)); auto& g11 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset11)); T tmp = x(i) / (T)2 / dx; g00.new_v += TV(-tmp,
+-tmp).cwiseProduct(Q[g00.idx]); g10.new_v += TV(tmp,
+-tmp).cwiseProduct(Q[g10.idx]); g01.new_v += TV(-tmp,
+tmp).cwiseProduct(Q[g01.idx]); g11.new_v += TV(tmp,
+tmp).cwiseProduct(Q[g11.idx]);
         }
 
         tbb::parallel_for(0, (int)div_nodes.size(), [&](int i) {
             uint64_t offset00 = div_nodes[i];
-            uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-            uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-            uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
-            auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
-            auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
-            auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
-            auto& g11 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset11));
-            TV v00 = g00.new_v.cwiseProduct(Q[g00.idx]);
-            TV v10 = g10.new_v.cwiseProduct(Q[g10.idx]);
-            TV v01 = g01.new_v.cwiseProduct(Q[g01.idx]);
-            TV v11 = g11.new_v.cwiseProduct(Q[g11.idx]);
-            b(i) = rho_scale * omegain[i] * Rin[i] * Rin[i] * omegain[i] * get_div(v00, v10, v01, v11);
+            uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+            auto& g00 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset00)); auto& g10 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset10)); auto& g01 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset01)); auto& g11 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset11)); TV v00 = g00.new_v.cwiseProduct(Q[g00.idx]); TV
+v10 = g10.new_v.cwiseProduct(Q[g10.idx]); TV v01 =
+g01.new_v.cwiseProduct(Q[g01.idx]); TV v11 = g11.new_v.cwiseProduct(Q[g11.idx]);
+            b(i) = rho_scale * omegain[i] * Rin[i] * Rin[i] * omegain[i] *
+get_div(v00, v10, v01, v11);
         });
     };
 
@@ -154,17 +153,22 @@ void outputGlobalPreconditioner()
         g.new_v = TV::Zero();
     });
 //        for (uint64_t color = 0; color < (1 << dim); ++color) {
-//            tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx) {
+//            tbb::parallel_for(0, (int)particle_group.size(), [&](int
+group_idx) {
 //                if ((block_offset[group_idx] & ((1 << dim) - 1)) != color)
 //                    return;
-//                for (int idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second; ++idx) {
+//                for (int idx = particle_group[group_idx].first; idx <=
+particle_group[group_idx].second; ++idx) {
 //                    int i = particle_order[idx];
 //                    TV& Xp = Xarray[i];
 //                    TM& Fn = (*Fn_pointer)[i];
 //                    BSplineWeights<T, dim> spline(Xp, dx);
-//                    grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-//                        TM tmp = dt * dt * rho_scale * Q[g.idx] * dw.transpose() * Fn;
-//                        TM tmpooRR = tmp.cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i]).cwiseProduct(omega[i]);
+//                    grid.iterateKernel(spline, particle_base_offset[i], [&](IV
+node, T w, TV dw, GridState<T, dim>& g) {
+//                        TM tmp = dt * dt * rho_scale * Q[g.idx] *
+dw.transpose() * Fn;
+//                        TM tmpooRR =
+tmp.cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i]).cwiseProduct(omega[i]);
 //                        TV opt = tmpooRR * Fn.transpose() * dw;
 //                        g.new_v += opt.cwiseProduct(Q[g.idx]);
 //                    });
@@ -175,19 +179,21 @@ void outputGlobalPreconditioner()
         auto grid_array = grid.grid->Get_Array();
         tbb::parallel_for(0, (int)div_nodes.size(), [&](int i) {
             uint64_t offset00 = div_nodes[i];
-            uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-            uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-            uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
-            auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
-            auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
-            auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
-            auto& g11 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset11));
-            mtx.lock();
-            g00.new_v += (rho_scale * Q[g00.idx] * omegain[i] * Rin[i] * Rin[i] * omegain[i]).cwiseProduct(Q[g00.idx]) / (T)4 / dx / dx;
-            g10.new_v += (rho_scale * Q[g10.idx] * omegain[i] * Rin[i] * Rin[i] * omegain[i]).cwiseProduct(Q[g10.idx]) / (T)4 / dx / dx;
-            g01.new_v += (rho_scale * Q[g01.idx] * omegain[i] * Rin[i] * Rin[i] * omegain[i]).cwiseProduct(Q[g01.idx]) / (T)4 / dx / dx;
-            g11.new_v += (rho_scale * Q[g11.idx] * omegain[i] * Rin[i] * Rin[i] * omegain[i]).cwiseProduct(Q[g11.idx]) / (T)4 / dx / dx;
-            mtx.unlock();
+            uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+            auto& g00 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset00)); auto& g10 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset10)); auto& g01 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset01)); auto& g11 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset11)); mtx.lock(); g00.new_v += (rho_scale * Q[g00.idx] *
+omegain[i] * Rin[i] * Rin[i] * omegain[i]).cwiseProduct(Q[g00.idx]) / (T)4 / dx
+/ dx; g10.new_v += (rho_scale * Q[g10.idx] * omegain[i] * Rin[i] * Rin[i] *
+omegain[i]).cwiseProduct(Q[g10.idx]) / (T)4 / dx / dx; g01.new_v += (rho_scale *
+Q[g01.idx] * omegain[i] * Rin[i] * Rin[i] * omegain[i]).cwiseProduct(Q[g01.idx])
+/ (T)4 / dx / dx; g11.new_v += (rho_scale * Q[g11.idx] * omegain[i] * Rin[i] *
+Rin[i] * omegain[i]).cwiseProduct(Q[g11.idx]) / (T)4 / dx / dx; mtx.unlock();
         });
     }
     TVStack pre = dv;
@@ -215,40 +221,34 @@ void outputGlobalPreconditioner()
         g.new_v = dv.col(g.idx);
     });
     tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx) {
-        for (int idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second; ++idx) {
-            int i = particle_order[idx];
-            TV& Xp = Xarray[i];
-            TM& Fn = (*Fn_pointer)[i];
-            BSplineWeights<T, dim> spline(Xp, dx);
-            TM tmp = Fn - F[i];
-            grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-                tmp += dt * g.v * dw.transpose() * Fn;
+        for (int idx = particle_group[group_idx].first; idx <=
+particle_group[group_idx].second; ++idx) { int i = particle_order[idx]; TV& Xp =
+Xarray[i]; TM& Fn = (*Fn_pointer)[i]; BSplineWeights<T, dim> spline(Xp, dx); TM
+tmp = Fn - F[i]; grid.iterateKernel(spline, particle_base_offset[i], [&](IV
+node, T w, TV dw, GridState<T, dim>& g) { tmp += dt * g.v * dw.transpose() * Fn;
                 tmp += dt * g.new_v * dw.transpose() * Fn;
             });
             mtx.lock();
-            prime_residual += (tmp.cwiseProduct(omega[i]).cwiseProduct(R[i])).squaredNorm();
-            mtx.unlock();
+            prime_residual +=
+(tmp.cwiseProduct(omega[i]).cwiseProduct(R[i])).squaredNorm(); mtx.unlock();
         }
     });
     if constexpr (use_incompressibility && dim == 2) {
         auto grid_array = grid.grid->Get_Array();
         tbb::parallel_for(0, (int)div_nodes.size(), [&](int i) {
             uint64_t offset00 = div_nodes[i];
-            uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-            uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-            uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
-            auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
-            auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
-            auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
-            auto& g11 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset11));
-            TV v00 = g00.v + dv.col(g00.idx);
-            TV v10 = g10.v + dv.col(g10.idx);
-            TV v01 = g01.v + dv.col(g01.idx);
-            TV v11 = g11.v + dv.col(g11.idx);
-            mtx.lock();
-            T tmp = Rin[i] * omegain[i] * get_div(v00, v10, v01, v11);
-            prime_residual += tmp * tmp;
-            mtx.unlock();
+            uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+            auto& g00 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset00)); auto& g10 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset10)); auto& g01 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset01)); auto& g11 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset11)); TV v00 = g00.v + dv.col(g00.idx); TV v10 = g10.v +
+dv.col(g10.idx); TV v01 = g01.v + dv.col(g01.idx); TV v11 = g11.v +
+dv.col(g11.idx); mtx.lock(); T tmp = Rin[i] * omegain[i] * get_div(v00, v10,
+v01, v11); prime_residual += tmp * tmp; mtx.unlock();
         });
     }
     prime_residual = std::sqrt(prime_residual);
@@ -258,17 +258,16 @@ void outputGlobalPreconditioner()
         g.new_v -= old_dv.col(g.idx);
     });
     tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx) {
-        for (int idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second; ++idx) {
-            int i = particle_order[idx];
-            TV& Xp = Xarray[i];
-            TM& Fn = (*Fn_pointer)[i];
-            BSplineWeights<T, dim> spline(Xp, dx);
-            TM tmp = TM::Zero();
-            grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-                tmp += dt * g.new_v * dw.transpose() * Fn;
+        for (int idx = particle_group[group_idx].first; idx <=
+particle_group[group_idx].second; ++idx) { int i = particle_order[idx]; TV& Xp =
+Xarray[i]; TM& Fn = (*Fn_pointer)[i]; BSplineWeights<T, dim> spline(Xp, dx); TM
+tmp = TM::Zero(); grid.iterateKernel(spline, particle_base_offset[i], [&](IV
+node, T w, TV dw, GridState<T, dim>& g) { tmp += dt * g.new_v * dw.transpose() *
+Fn;
             });
             mtx.lock();
-            dual_residual += (rho_scale * tmp.cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i]).cwiseProduct(omega[i])).squaredNorm();
+            dual_residual += (rho_scale *
+tmp.cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i]).cwiseProduct(omega[i])).squaredNorm();
             mtx.unlock();
         }
     });
@@ -296,22 +295,23 @@ void updateRhoScaleRelative()
         g.new_v = dv.col(g.idx);
     });
     tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx) {
-        for (int idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second; ++idx) {
-            int i = particle_order[idx];
-            TV& Xp = Xarray[i];
-            TM& Fn = (*Fn_pointer)[i];
-            BSplineWeights<T, dim> spline(Xp, dx);
-            TM tmp1 = Fn, tmp2 = F[i];
-            grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-                tmp2 += dt * g.v * dw.transpose() * Fn;
-                tmp2 += dt * g.new_v * dw.transpose() * Fn;
+        for (int idx = particle_group[group_idx].first; idx <=
+particle_group[group_idx].second; ++idx) { int i = particle_order[idx]; TV& Xp =
+Xarray[i]; TM& Fn = (*Fn_pointer)[i]; BSplineWeights<T, dim> spline(Xp, dx); TM
+tmp1 = Fn, tmp2 = F[i]; grid.iterateKernel(spline, particle_base_offset[i],
+[&](IV node, T w, TV dw, GridState<T, dim>& g) { tmp2 += dt * g.v *
+dw.transpose() * Fn; tmp2 += dt * g.new_v * dw.transpose() * Fn;
             });
             TM tmp = tmp1 - tmp2;
             mtx.lock();
-            prime_residual = std::max(prime_residual, (tmp.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
-            prime_invidual = std::max(prime_invidual, (tmp1.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
-            prime_invidual = std::max(prime_invidual, (tmp2.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
-            //prime_invidual = std::max(prime_invidual, (tmp3.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
+            prime_residual = std::max(prime_residual,
+(tmp.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
+            prime_invidual = std::max(prime_invidual,
+(tmp1.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
+            prime_invidual = std::max(prime_invidual,
+(tmp2.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
+            //prime_invidual = std::max(prime_invidual,
+(tmp3.cwiseProduct(omega[i]).cwiseProduct(R[i])).cwiseAbs().maxCoeff());
             mtx.unlock();
         }
     });
@@ -322,26 +322,25 @@ void updateRhoScaleRelative()
     auto ce_name = constitutive_model_name<CorotatedElasticity<T, dim>>;
     auto ranges = particles.X.ranges;
     tbb::parallel_for(ranges, [&](DisjointRanges& subrange) {
-        DisjointRanges subset(subrange, particles.commonRanges(ce_name(), element_measure_name<T>(), F_name()));
-        for (auto iter = particles.subsetIter(subset, ce_name(), element_measure_name<T>(), F_name()); iter; ++iter) {
-            auto& constitutive_model = iter.template get<0>();
-            auto& vol = iter.template get<1>();
-            auto& Fn = iter.template get<2>();
-            int i = iter.entryId();
-            TV& Xp = Xarray[i];
-            BSplineWeights<T, dim> spline(Xp, dx);
-            TM tmp1 = TM::Zero(), tmp2 = TM::Zero();
-            grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-                if (g.idx >= 0) {
-                    tmp1 += dt * g.new_v * dw.transpose() * Fn;
-                    tmp2 += dt * old_dv.col(g.idx) * dw.transpose() * Fn;
+        DisjointRanges subset(subrange, particles.commonRanges(ce_name(),
+element_measure_name<T>(), F_name())); for (auto iter =
+particles.subsetIter(subset, ce_name(), element_measure_name<T>(), F_name());
+iter; ++iter) { auto& constitutive_model = iter.template get<0>(); auto& vol =
+iter.template get<1>(); auto& Fn = iter.template get<2>(); int i =
+iter.entryId(); TV& Xp = Xarray[i]; BSplineWeights<T, dim> spline(Xp, dx); TM
+tmp1 = TM::Zero(), tmp2 = TM::Zero(); grid.iterateKernel(spline,
+particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) { if
+(g.idx >= 0) { tmp1 += dt * g.new_v * dw.transpose() * Fn; tmp2 += dt *
+old_dv.col(g.idx) * dw.transpose() * Fn;
                 }
             });
             TM tmp = tmp1 - tmp2;
             mtx.lock();
             TM u_bar = -y[i].cwiseQuotient(omega[i]) / rho_scale;
-            dual_residual = std::max(dual_residual, (rho_scale * tmp.cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i]).cwiseProduct(omega[i])).cwiseAbs().maxCoeff());
-            dual_invidual = std::max(dual_invidual, (rho_scale * (u_bar.cwiseProduct(omega[i]).cwiseProduct(omega[i]))).cwiseAbs().maxCoeff());
+            dual_residual = std::max(dual_residual, (rho_scale *
+tmp.cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i]).cwiseProduct(omega[i])).cwiseAbs().maxCoeff());
+            dual_invidual = std::max(dual_invidual, (rho_scale *
+(u_bar.cwiseProduct(omega[i]).cwiseProduct(omega[i]))).cwiseAbs().maxCoeff());
 
             typename CorotatedElasticity<T, dim>::Scratch s;
             constitutive_model.updateScratch(F[i], s);
@@ -369,9 +368,10 @@ void calcDivergence()
     auto grid_array = grid.grid->Get_Array();
     tbb::parallel_for(0, (int)div_nodes.size(), [&](int i) {
         uint64_t offset00 = div_nodes[i];
-        uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-        uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-        uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+        uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
         auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
         auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
         auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
@@ -402,66 +402,65 @@ void FStep(T localTol)
     auto ce_name = constitutive_model_name<CorotatedElasticity<T, dim>>;
     auto ranges = particles.X.ranges;
     tbb::parallel_for(ranges, [&](DisjointRanges& subrange) {
-        DisjointRanges subset(subrange, particles.commonRanges(ce_name(), element_measure_name<T>(), F_name()));
-        for (auto iter = particles.subsetIter(subset, ce_name(), element_measure_name<T>(), F_name()); iter; ++iter) {
-            auto& constitutive_model = iter.template get<0>();
-            auto& vol = iter.template get<1>();
-            auto& Fn = iter.template get<2>();
-            int i = iter.entryId();
-            TV& Xp = Xarray[i];
+        DisjointRanges subset(subrange, particles.commonRanges(ce_name(),
+element_measure_name<T>(), F_name())); for (auto iter =
+particles.subsetIter(subset, ce_name(), element_measure_name<T>(), F_name());
+iter; ++iter) { auto& constitutive_model = iter.template get<0>(); auto& vol =
+iter.template get<1>(); auto& Fn = iter.template get<2>(); int i =
+iter.entryId(); TV& Xp = Xarray[i];
             // build rhs
             TM u_bar = -y[i].cwiseQuotient(omega[i]) / rho_scale;
             TM FDb = Fn + u_bar.cwiseQuotient(R[i]).cwiseQuotient(R[i]);
             BSplineWeights<T, dim> spline(Xp, dx);
-            grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-                FDb += dt * g.v * dw.transpose() * Fn;
-                FDb += dt * g.new_v * dw.transpose() * Fn;
+            grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T
+w, TV dw, GridState<T, dim>& g) { FDb += dt * g.v * dw.transpose() * Fn; FDb +=
+dt * g.new_v * dw.transpose() * Fn;
             });
             typedef typename CorotatedElasticity<T, dim>::Hessian Hessian;
             // SVD rhs_raw
-            auto computeEnergyVal_zUpdate = [&](const FlattenTM& flatten_F, T& E) {
-                TM F = TM(flatten_F.data());
-                typename CorotatedElasticity<T, dim>::Scratch s;
-                constitutive_model.updateScratch(F, s);
-                E = vol * constitutive_model.psi(s);
+            auto computeEnergyVal_zUpdate = [&](const FlattenTM& flatten_F, T&
+E) { TM F = TM(flatten_F.data()); typename CorotatedElasticity<T, dim>::Scratch
+s; constitutive_model.updateScratch(F, s); E = vol * constitutive_model.psi(s);
                 for (int col = 0; col < dim; ++col)
                     for (int row = 0; row < dim; ++row) {
-                        T ooRR = omega[i](row, col) * omega[i](row, col) * R[i](row, col) * R[i](row, col);
-                        E += 0.5 * rho_scale * ooRR * (F(row, col) - FDb(row, col)) * (F(row, col) - FDb(row, col));
+                        T ooRR = omega[i](row, col) * omega[i](row, col) *
+R[i](row, col) * R[i](row, col); E += 0.5 * rho_scale * ooRR * (F(row, col) -
+FDb(row, col)) * (F(row, col) - FDb(row, col));
                     }
-                // E = vol * constitutive_model.psi(s) + 0.5 * rho_scale * ((F - FDb).cwiseProduct(omega[i]).cwiseProduct(R[i])).squaredNorm();
+                // E = vol * constitutive_model.psi(s) + 0.5 * rho_scale * ((F -
+FDb).cwiseProduct(omega[i]).cwiseProduct(R[i])).squaredNorm();
             };
-            auto computeGradient_zUpdate = [&](const FlattenTM& flatten_F, FlattenTM& g) {
-                TM F = TM(flatten_F.data());
-                typename CorotatedElasticity<T, dim>::Scratch s;
-                constitutive_model.updateScratch(F, s);
-                TM firstPiola;
+            auto computeGradient_zUpdate = [&](const FlattenTM& flatten_F,
+FlattenTM& g) { TM F = TM(flatten_F.data()); typename CorotatedElasticity<T,
+dim>::Scratch s; constitutive_model.updateScratch(F, s); TM firstPiola;
                 constitutive_model.firstPiola(s, firstPiola);
                 g = vol * FlattenTM(firstPiola.data());
                 for (int col = 0; col < dim; ++col)
                     for (int row = 0; row < dim; ++row) {
                         int idx = col * dim + row;
-                        T ooRR = omega[i](row, col) * omega[i](row, col) * R[i](row, col) * R[i](row, col);
-                        g(idx) += rho_scale * ooRR * (F(row, col) - FDb(row, col));
+                        T ooRR = omega[i](row, col) * omega[i](row, col) *
+R[i](row, col) * R[i](row, col); g(idx) += rho_scale * ooRR * (F(row, col) -
+FDb(row, col));
                     }
-                // g = FlattenTM((vol * firstPiola + rho_scale * (F - FDb).cwiseProduct(omega[i]).cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i])).eval().data());
+                // g = FlattenTM((vol * firstPiola + rho_scale * (F -
+FDb).cwiseProduct(omega[i]).cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i])).eval().data());
             };
-            auto computeHessianProxy_zUpdate = [&](const FlattenTM& flatten_F, Hessian& P) {
-                TM F = TM(flatten_F.data());
-                typename CorotatedElasticity<T, dim>::Scratch s;
-                constitutive_model.updateScratch(F, s);
-                Hessian firstPiolaDerivative;
-                constitutive_model.firstPiolaDerivative(s, firstPiolaDerivative);
+            auto computeHessianProxy_zUpdate = [&](const FlattenTM& flatten_F,
+Hessian& P) { TM F = TM(flatten_F.data()); typename CorotatedElasticity<T,
+dim>::Scratch s; constitutive_model.updateScratch(F, s); Hessian
+firstPiolaDerivative; constitutive_model.firstPiolaDerivative(s,
+firstPiolaDerivative);
                 // TODO: diagonal for this
                 makePD(firstPiolaDerivative);
                 P = vol * firstPiolaDerivative;
                 for (int col = 0; col < dim; ++col)
                     for (int row = 0; row < dim; ++row) {
                         int idx = col * dim + row;
-                        T ooRR = omega[i](row, col) * omega[i](row, col) * R[i](row, col) * R[i](row, col);
-                        P(idx, idx) += rho_scale * ooRR;
+                        T ooRR = omega[i](row, col) * omega[i](row, col) *
+R[i](row, col) * R[i](row, col); P(idx, idx) += rho_scale * ooRR;
                     }
-                // P = vol * firstPiolaDerivative + rho_scale * Hessian(FlattenTM((omega[i].cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i])).eval().data()).asDiagonal());
+                // P = vol * firstPiolaDerivative + rho_scale *
+Hessian(FlattenTM((omega[i].cwiseProduct(omega[i]).cwiseProduct(R[i]).cwiseProduct(R[i])).eval().data()).asDiagonal());
             };
             FlattenTM Fi(F[i].data());
             FlattenTM g;
@@ -506,59 +505,59 @@ void ruizEqulibration()
     rRineps = TStack::Zero((int)div_nodes.size());
     T eps = 1e-12;
     for (int tim = 0;; ++tim) {
-        T Gresidual = (TStack::Ones(Np * dim * dim) - rGeps).cwiseAbs().maxCoeff();
-        T Qresidual = (TStack::Ones(Nn * dim) - rQeps).cwiseAbs().maxCoeff();
-        T Rresidual = (TStack::Ones(Np * dim * dim) - rReps).cwiseAbs().maxCoeff();
-        T Rinresidual = div_nodes.size() == 0 ? (T)0 : (TStack::Ones((int)div_nodes.size()) - rRineps).cwiseAbs().maxCoeff();
-        if (std::max(std::max(Gresidual, Qresidual), std::max(Rresidual, Rinresidual)) < eps) {
-            ZIRAN_WARN("Residuals : ", Gresidual, " ", Qresidual, " ", Rresidual, " ", Rinresidual, ". Convergence number : ", tim);
-            break;
+        T Gresidual = (TStack::Ones(Np * dim * dim) -
+rGeps).cwiseAbs().maxCoeff(); T Qresidual = (TStack::Ones(Nn * dim) -
+rQeps).cwiseAbs().maxCoeff(); T Rresidual = (TStack::Ones(Np * dim * dim) -
+rReps).cwiseAbs().maxCoeff(); T Rinresidual = div_nodes.size() == 0 ? (T)0 :
+(TStack::Ones((int)div_nodes.size()) - rRineps).cwiseAbs().maxCoeff(); if
+(std::max(std::max(Gresidual, Qresidual), std::max(Rresidual, Rinresidual)) <
+eps) { ZIRAN_WARN("Residuals : ", Gresidual, " ", Qresidual, " ", Rresidual, "
+", Rinresidual, ". Convergence number : ", tim); break;
         }
         // rGeps
         DEFINE_CE_NAME
         //auto ce_name = constitutive_model_name<CorotatedElasticity<T, dim>>;
         auto ranges = particles.X.ranges;
         tbb::parallel_for(ranges, [&](DisjointRanges& subrange) {
-            DisjointRanges subset(subrange, particles.commonRanges(ce_name(), element_measure_name<T>(), F_name()));
-            for (auto iter = particles.subsetIter(subset, ce_name(), element_measure_name<T>(), F_name()); iter; ++iter) {
-                auto& constitutive_model = iter.template get<0>();
-                auto& vol = iter.template get<1>();
-                auto& Fn = iter.template get<2>();
-                int i = iter.entryId();
-                typename CorotatedElasticity<T, dim>::Scratch s;
+            DisjointRanges subset(subrange, particles.commonRanges(ce_name(),
+element_measure_name<T>(), F_name())); for (auto iter =
+particles.subsetIter(subset, ce_name(), element_measure_name<T>(), F_name());
+iter; ++iter) { auto& constitutive_model = iter.template get<0>(); auto& vol =
+iter.template get<1>(); auto& Fn = iter.template get<2>(); int i =
+iter.entryId(); typename CorotatedElasticity<T, dim>::Scratch s;
                 constitutive_model.updateScratch(Fn, s);
                 typename CorotatedElasticity<T, dim>::Hessian dPdF;
                 constitutive_model.firstPiolaDerivative(s, dPdF);
                 for (int col = 0; col < dim; ++col)
                     for (int row = 0; row < dim; ++row) {
                         int idx = col * dim + row;
-                        FlattenTM cp = (vol * dPdF.row(idx).transpose()).cwiseProduct(FlattenTM(G[i].data()));
-                        T Zcom = std::abs(cp.cwiseAbs().maxCoeff() * G[i](row, col));
-                        T WTcom = std::abs(omega[i](row, col) * R[i](row, col) * G[i](row, col));
-                        rGeps(i * dim * dim + idx) = std::max(Zcom, WTcom);
+                        FlattenTM cp = (vol *
+dPdF.row(idx).transpose()).cwiseProduct(FlattenTM(G[i].data())); T Zcom =
+std::abs(cp.cwiseAbs().maxCoeff() * G[i](row, col)); T WTcom =
+std::abs(omega[i](row, col) * R[i](row, col) * G[i](row, col)); rGeps(i * dim *
+dim + idx) = std::max(Zcom, WTcom);
                     }
             }
         });
         // rQeps
         grid.iterateGrid([&](IV node, GridState<T, dim>& g) {
             for (int d = 0; d < dim; ++d)
-                rQeps(g.idx * dim + d) = std::abs(g.m * Q[g.idx](d) * Q[g.idx](d));
+                rQeps(g.idx * dim + d) = std::abs(g.m * Q[g.idx](d) *
+Q[g.idx](d));
         });
         auto& Xarray = particles.X.array;
         for (uint64_t color = 0; color < (1 << dim); ++color) {
-            tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx) {
-                if ((block_offset[group_idx] & ((1 << dim) - 1)) != color)
-                    return;
-                for (int idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second; ++idx) {
-                    int i = particle_order[idx];
-                    TV& Xp = Xarray[i];
-                    TM& Fn = (*Fn_pointer)[i];
-                    BSplineWeights<T, dim> spline(Xp, dx);
-                    grid.iterateKernel(spline, particle_base_offset[i], [&](const IV& node, T w, const TV& dw, GridState<T, dim>& g) {
-                        for (int d = 0; d < dim; ++d) {
-                            TV ts = ((R[i].row(d)).cwiseProduct(omega[i].row(d))).transpose();
-                            T DTWTcom = std::abs(ts.cwiseProduct(dt * Fn.transpose() * dw).cwiseAbs().maxCoeff() * Q[g.idx](d));
-                            rQeps(g.idx * dim + d) = std::max(rQeps(g.idx * dim + d), DTWTcom);
+            tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx)
+{ if ((block_offset[group_idx] & ((1 << dim) - 1)) != color) return; for (int
+idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second;
+++idx) { int i = particle_order[idx]; TV& Xp = Xarray[i]; TM& Fn =
+(*Fn_pointer)[i]; BSplineWeights<T, dim> spline(Xp, dx);
+                    grid.iterateKernel(spline, particle_base_offset[i],
+[&](const IV& node, T w, const TV& dw, GridState<T, dim>& g) { for (int d = 0; d
+< dim; ++d) { TV ts = ((R[i].row(d)).cwiseProduct(omega[i].row(d))).transpose();
+                            T DTWTcom = std::abs(ts.cwiseProduct(dt *
+Fn.transpose() * dw).cwiseAbs().maxCoeff() * Q[g.idx](d)); rQeps(g.idx * dim +
+d) = std::max(rQeps(g.idx * dim + d), DTWTcom);
                         }
                     });
                 }
@@ -568,41 +567,45 @@ void ruizEqulibration()
             auto grid_array = grid.grid->Get_Array();
             tbb::parallel_for(0, (int)div_nodes.size(), [&](int i) {
                 uint64_t offset00 = div_nodes[i];
-                uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-                uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-                uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
-                auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
-                auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
-                auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
-                auto& g11 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset11));
-                rQeps(g00.idx * dim + 0) = std::max(rQeps(g00.idx * dim + 0), std::abs(Q[g00.idx](0) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g00.idx * dim + 1) = std::max(rQeps(g00.idx * dim + 1), std::abs(Q[g00.idx](1) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g10.idx * dim + 0) = std::max(rQeps(g10.idx * dim + 0), std::abs(Q[g10.idx](0) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g10.idx * dim + 1) = std::max(rQeps(g10.idx * dim + 1), std::abs(Q[g10.idx](1) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g01.idx * dim + 0) = std::max(rQeps(g01.idx * dim + 0), std::abs(Q[g01.idx](0) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g01.idx * dim + 1) = std::max(rQeps(g01.idx * dim + 1), std::abs(Q[g01.idx](1) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g11.idx * dim + 0) = std::max(rQeps(g11.idx * dim + 0), std::abs(Q[g11.idx](0) * omegain[i] * Rin[i] / (T)2 / dx));
-                rQeps(g11.idx * dim + 1) = std::max(rQeps(g11.idx * dim + 1), std::abs(Q[g11.idx](1) * omegain[i] * Rin[i] / (T)2 / dx));
+                uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+                auto& g00 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset00)); auto& g10 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset10)); auto& g01 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset01)); auto& g11 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset11)); rQeps(g00.idx * dim + 0) = std::max(rQeps(g00.idx
+* dim + 0), std::abs(Q[g00.idx](0) * omegain[i] * Rin[i] / (T)2 / dx));
+                rQeps(g00.idx * dim + 1) = std::max(rQeps(g00.idx * dim + 1),
+std::abs(Q[g00.idx](1) * omegain[i] * Rin[i] / (T)2 / dx)); rQeps(g10.idx * dim
++ 0) = std::max(rQeps(g10.idx * dim + 0), std::abs(Q[g10.idx](0) * omegain[i] *
+Rin[i] / (T)2 / dx)); rQeps(g10.idx * dim + 1) = std::max(rQeps(g10.idx * dim +
+1), std::abs(Q[g10.idx](1) * omegain[i] * Rin[i] / (T)2 / dx)); rQeps(g01.idx *
+dim + 0) = std::max(rQeps(g01.idx * dim + 0), std::abs(Q[g01.idx](0) *
+omegain[i] * Rin[i] / (T)2 / dx)); rQeps(g01.idx * dim + 1) =
+std::max(rQeps(g01.idx * dim + 1), std::abs(Q[g01.idx](1) * omegain[i] * Rin[i]
+/ (T)2 / dx)); rQeps(g11.idx * dim + 0) = std::max(rQeps(g11.idx * dim + 0),
+std::abs(Q[g11.idx](0) * omegain[i] * Rin[i] / (T)2 / dx)); rQeps(g11.idx * dim
++ 1) = std::max(rQeps(g11.idx * dim + 1), std::abs(Q[g11.idx](1) * omegain[i] *
+Rin[i] / (T)2 / dx));
             });
         }
         // rReps
         tbb::parallel_for(0, (int)particle_group.size(), [&](int group_idx) {
-            for (int idx = particle_group[group_idx].first; idx <= particle_group[group_idx].second; ++idx) {
-                int i = particle_order[idx];
-                TV& Xp = Xarray[i];
-                TM& Fn = (*Fn_pointer)[i];
-                for (int col = 0; col < dim; ++col)
-                    for (int row = 0; row < dim; ++row) {
-                        int idx = col * dim + row;
-                        rReps(i * dim * dim + idx) = std::abs(omega[i](row, col) * R[i](row, col) * G[i](row, col));
+            for (int idx = particle_group[group_idx].first; idx <=
+particle_group[group_idx].second; ++idx) { int i = particle_order[idx]; TV& Xp =
+Xarray[i]; TM& Fn = (*Fn_pointer)[i]; for (int col = 0; col < dim; ++col) for
+(int row = 0; row < dim; ++row) { int idx = col * dim + row; rReps(i * dim * dim
++ idx) = std::abs(omega[i](row, col) * R[i](row, col) * G[i](row, col));
                     }
                 BSplineWeights<T, dim> spline(Xp, dx);
-                grid.iterateKernel(spline, particle_base_offset[i], [&](IV node, T w, TV dw, GridState<T, dim>& g) {
-                    for (int col = 0; col < dim; ++col)
-                        for (int row = 0; row < dim; ++row) {
-                            int idx = col * dim + row;
-                            T WDcom = std::abs(Q[g.idx](row) * (dt * dw.transpose() * Fn).transpose()(col) * omega[i](row, col) * R[i](row, col));
-                            rReps(i * dim * dim + idx) = std::max(rReps(i * dim * dim + idx), WDcom);
+                grid.iterateKernel(spline, particle_base_offset[i], [&](IV node,
+T w, TV dw, GridState<T, dim>& g) { for (int col = 0; col < dim; ++col) for (int
+row = 0; row < dim; ++row) { int idx = col * dim + row; T WDcom =
+std::abs(Q[g.idx](row) * (dt * dw.transpose() * Fn).transpose()(col) *
+omega[i](row, col) * R[i](row, col)); rReps(i * dim * dim + idx) =
+std::max(rReps(i * dim * dim + idx), WDcom);
                         }
                 });
             }
@@ -612,18 +615,18 @@ void ruizEqulibration()
             auto grid_array = grid.grid->Get_Array();
             tbb::parallel_for(0, (int)div_nodes.size(), [&](int i) {
                 uint64_t offset00 = div_nodes[i];
-                uint64_t offset10 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 0));
-                uint64_t offset01 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1));
-                uint64_t offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
-                auto& g00 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset00));
-                auto& g10 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset10));
-                auto& g01 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset01));
-                auto& g11 = reinterpret_cast<GridState<T, dim>&>(grid_array(offset11));
-                T Q00 = Q[g00.idx].cwiseAbs().maxCoeff();
-                T Q10 = Q[g10.idx].cwiseAbs().maxCoeff();
-                T Q01 = Q[g01.idx].cwiseAbs().maxCoeff();
-                T Q11 = Q[g11.idx].cwiseAbs().maxCoeff();
-                rRineps(i) = std::abs(Rin[i] * omegain[i] * std::max(std::max(Q00, Q10), std::max(Q01, Q11)) / (T)2 / dx);
+                uint64_t offset10 = SparseMask::Packed_Add(offset00,
+SparseMask::Linear_Offset(1, 0)); uint64_t offset01 =
+SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(0, 1)); uint64_t
+offset11 = SparseMask::Packed_Add(offset00, SparseMask::Linear_Offset(1, 1));
+                auto& g00 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset00)); auto& g10 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset10)); auto& g01 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset01)); auto& g11 = reinterpret_cast<GridState<T,
+dim>&>(grid_array(offset11)); T Q00 = Q[g00.idx].cwiseAbs().maxCoeff(); T Q10 =
+Q[g10.idx].cwiseAbs().maxCoeff(); T Q01 = Q[g01.idx].cwiseAbs().maxCoeff(); T
+Q11 = Q[g11.idx].cwiseAbs().maxCoeff(); rRineps(i) = std::abs(Rin[i] *
+omegain[i] * std::max(std::max(Q00, Q10), std::max(Q01, Q11)) / (T)2 / dx);
             });
         }
         // update
@@ -632,13 +635,13 @@ void ruizEqulibration()
         StdVector<TM> RR(R);
         StdVector<T> RRin(Rin);
         for (int i = 0; i < Np; ++i)
-            G[i] = GG[i].cwiseQuotient(TM(rGeps.template block<dim * dim, 1>(i * dim * dim, 0).data()).cwiseSqrt());
-        for (int i = 0; i < Nn; ++i)
-            Q[i] = QQ[i].cwiseQuotient(TV(rQeps.template block<dim, 1>(i * dim, 0).data()).cwiseSqrt());
-        for (int i = 0; i < Np; ++i)
-            R[i] = RR[i].cwiseQuotient(TM(rReps.template block<dim * dim, 1>(i * dim * dim, 0).data()).cwiseSqrt());
-        for (int i = 0; i < (int)div_nodes.size(); ++i)
-            Rin[i] = RRin[i] / std::sqrt(rRineps(i));
+            G[i] = GG[i].cwiseQuotient(TM(rGeps.template block<dim * dim, 1>(i *
+dim * dim, 0).data()).cwiseSqrt()); for (int i = 0; i < Nn; ++i) Q[i] =
+QQ[i].cwiseQuotient(TV(rQeps.template block<dim, 1>(i * dim,
+0).data()).cwiseSqrt()); for (int i = 0; i < Np; ++i) R[i] =
+RR[i].cwiseQuotient(TM(rReps.template block<dim * dim, 1>(i * dim * dim,
+0).data()).cwiseSqrt()); for (int i = 0; i < (int)div_nodes.size(); ++i) Rin[i]
+= RRin[i] / std::sqrt(rRineps(i));
     }
 }
 
@@ -646,7 +649,9 @@ void writeState(std::ostream& out)
 {
     Base::writeState(out);
 
-    std::string filename = SimulationBase::output_dir.absolutePath(SimulationBase::outputFileName("residual", ".bgeo"));
+    std::string filename =
+SimulationBase::output_dir.absolutePath(SimulationBase::outputFileName("residual",
+".bgeo"));
 
     Partio::ParticlesDataMutable* parts = Partio::create();
     Partio::ParticleAttribute posH, typeH, residualH;

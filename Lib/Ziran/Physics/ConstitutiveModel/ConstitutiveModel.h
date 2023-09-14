@@ -9,7 +9,5 @@
 #include <Ziran/Physics/ConstitutiveModel/StvkWithHencky.h>
 #include <Ziran/Physics/ConstitutiveModel/StvkWithHenckyIsotropic.h>
 
-namespace ZIRAN {
-
-} // namespace ZIRAN
+namespace ZIRAN {} // namespace ZIRAN
 #endif

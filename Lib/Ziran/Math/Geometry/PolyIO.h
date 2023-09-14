@@ -12,18 +12,17 @@ namespace ZIRAN {
     The Z value will be 0 if 2D.
 */
 template <class T, int dim>
-void writePositionPoly(std::ostream& os, const StdVector<Vector<T, dim>>& X)
-{
-    os << "POINTS\n";
-    int count = 0;
-    for (auto x : X) {
-        os << ++count << ":";
-        for (int i = 0; i < dim; i++)
-            os << " " << x(i);
-        if (dim == 2)
-            os << " 0";
-        os << "\n";
-    }
+void writePositionPoly(std::ostream &os, const StdVector<Vector<T, dim>> &X) {
+  os << "POINTS\n";
+  int count = 0;
+  for (auto x : X) {
+    os << ++count << ":";
+    for (int i = 0; i < dim; i++)
+      os << " " << x(i);
+    if (dim == 2)
+      os << " 0";
+    os << "\n";
+  }
 }
 
 /**
@@ -31,13 +30,13 @@ void writePositionPoly(std::ostream& os, const StdVector<Vector<T, dim>>& X)
     The Z value will be 0 if 2D.
 */
 template <class T, int dim>
-void writePositionPoly(const std::string& filename, const StdVector<Vector<T, dim>>& X)
-{
-    std::ofstream fs;
-    fs.open(filename);
-    ZIRAN_ASSERT(fs, "could not open ", filename);
-    writePositionPoly(fs, X);
-    fs.close();
+void writePositionPoly(const std::string &filename,
+                       const StdVector<Vector<T, dim>> &X) {
+  std::ofstream fs;
+  fs.open(filename);
+  ZIRAN_ASSERT(fs, "could not open ", filename);
+  writePositionPoly(fs, X);
+  fs.close();
 }
 
 /**
@@ -49,28 +48,31 @@ void writePositionPoly(const std::string& filename, const StdVector<Vector<T, di
     The Z value will be 0 if the points are 2D.
 */
 template <class T, int dim>
-void writeSegmeshPoly(std::ostream& os, const StdVector<Vector<T, dim>>& X, const StdVector<Vector<int, 2>>& segments)
-{
-    writePositionPoly(os, X);
-    os << "POLYS\n";
-    int count = 0;
-    for (const Vector<int, 2>& seg : segments)
-        os << ++count << ": " << seg(0) + 1 << " " << seg(1) + 1 << "\n"; // poly segment mesh is 1-indexed
-    os << "END\n";
+void writeSegmeshPoly(std::ostream &os, const StdVector<Vector<T, dim>> &X,
+                      const StdVector<Vector<int, 2>> &segments) {
+  writePositionPoly(os, X);
+  os << "POLYS\n";
+  int count = 0;
+  for (const Vector<int, 2> &seg : segments)
+    os << ++count << ": " << seg(0) + 1 << " " << seg(1) + 1
+       << "\n"; // poly segment mesh is 1-indexed
+  os << "END\n";
 }
 
 template <class T, int dim>
-void writeSegmeshPoly(const std::string& filename, const StdVector<Vector<T, dim>>& X, const StdVector<Vector<int, 2>>& segments)
-{
-    std::ofstream fs;
-    fs.open(filename);
-    ZIRAN_ASSERT(fs, "could not open ", filename);
-    writeSegmeshPoly(fs, X, segments);
-    fs.close();
+void writeSegmeshPoly(const std::string &filename,
+                      const StdVector<Vector<T, dim>> &X,
+                      const StdVector<Vector<int, 2>> &segments) {
+  std::ofstream fs;
+  fs.open(filename);
+  ZIRAN_ASSERT(fs, "could not open ", filename);
+  writeSegmeshPoly(fs, X, segments);
+  fs.close();
 }
 
 template <class T, int dim>
-void readSegmeshPoly(const std::string& filename, StdVector<Vector<T, dim>>& X, StdVector<Vector<int, 2>>& segments);
+void readSegmeshPoly(const std::string &filename, StdVector<Vector<T, dim>> &X,
+                     StdVector<Vector<int, 2>> &segments);
 } // namespace ZIRAN
 
 #endif
