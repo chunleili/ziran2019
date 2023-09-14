@@ -575,6 +575,7 @@ public:
     }
 
     if (test_number == 7) {
+      // Do not use this case!!!
       sim.output_dir.path = "output/cow";
       sim.end_frame = 100;
       sim.dx = 0.01;
