@@ -574,63 +574,15 @@ public:
       });
     }
 
-    if (test_number == 7) {
-      // Do not use this case!!!
-      sim.output_dir.path = "output/cow";
-      sim.end_frame = 100;
-      sim.dx = 0.01;
-      sim.gravity = sim.gravity = TV(0, -9.8, 0);
-      sim.step.frame_dt = 1.0e-4;
-      sim.step.max_dt = sim.step.frame_dt;
-      sim.symplectic = false;
-      sim.cfl = 1.0;
-      sim.rho_scale = 1.0;
-      sim.autorestart = false;
-
-      sim.use_ruiz = false;
-      sim.admm_max_iterations = 30;
-      sim.local_tolerance = 1e-8;
-      sim.global_tolerance = 1e-14;
-      sim.global_max_iteration = 25;
-
-      sim.enable_visco = false;
-
-      {
-        StdVector<TV> meshed_points;
-        readPositionObj("cow.obj", meshed_points);
-        MpmParticleHandleBase<T, dim> particles_handle =
-            init_helper.sampleFromVdbFileWithExistingPoints(
-                meshed_points, "LevelSets/cow.vdb", 2, 8);
-        StvkWithHencky<T, dim> model(2000, 0.4);
-        particles_handle.addFBasedMpmForce(model);
-        VonMisesStvkHencky<T, dim> p(2, FLT_MAX, 0);
-        particles_handle.addPlasticity(model, p, "F");
-        auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
-          V = TV(0, 0, 1);
-        };
-        particles_handle.transform(initial_translation);
-      }
-
-      { // floor
-        // TV ground_origin(5, 4.86, 5);
-        TV ground_origin(0, 0, 0);
-        TV ground_normal(0, 1, 0);
-        HalfSpace<T, dim> ground_ls(ground_origin, ground_normal);
-        AnalyticCollisionObject<T, dim> ground_object(
-            ground_ls, AnalyticCollisionObject<T, dim>::SLIP);
-        init_helper.addAnalyticCollisionObject(ground_object);
-      }
-    }
-
     if (test_number == 8) {
       T p_E = 1e-4;
-      sim.output_dir.path = "output/cow0915";
+      sim.output_dir.path = "output/cow0915_2";
       sim.viscosity_v = 0.4;
       sim.viscosity_d = 0.4;
-      sim.end_frame = 10;
+      sim.end_frame = 100;
       sim.dx = 0.01;
       sim.gravity = TV(0, -9.8, 0);
-      sim.step.frame_dt = 1.0 / 25;
+      sim.step.frame_dt = 1.0 / 100;
       sim.step.max_dt = 1e-3;
       sim.quasistatic = false;
       sim.symplectic = false;
@@ -688,8 +640,8 @@ public:
             init_helper.sampleFromVdbFileWithExistingPoints(
                 meshed_points, "LevelSets/cow.vdb", 2, 8);
         StvkWithHenckyIsotropic<T, dim> equilibrated_model(E, 0.4);
-        equilibrated_model.lambda *= 100;
-        equilibrated_model.mu *= 100;
+        // equilibrated_model.lambda *= 100;
+        equilibrated_model.mu = 500;
 
         particles_handle.addFBasedMpmForce(equilibrated_model);
         VonMisesStvkHencky<T, dim> p(p_E, FLT_MAX, 0);
@@ -697,8 +649,8 @@ public:
         StvkWithHencky<T, dim> nonequilibrated_model(E * .2, 0.4);
         particles_handle.addFElasticNonequilibratedBasedMpmForce(
             nonequilibrated_model, (T).4, (T).4);
-        nonequilibrated_model.mu *= 100;
-        nonequilibrated_model.lambda *= 100;
+        // nonequilibrated_model.lambda = 100;
+        nonequilibrated_model.mu *= 500;
 
         // 向上抬升5dx,因为地板的厚度。
         auto initial_translation = [=](int index, Ref<T> mass, TV &X, TV &V) {
