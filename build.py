@@ -31,7 +31,7 @@ def build():
         subprocess.call(['cmake','..', '-DCMAKE_BUILD_TYPE=Release'])
 
 
-    subprocess.call(['make', '-j', '4'])
+    subprocess.call(['make', '-j', '16'])
 
     print('Build complete')
 

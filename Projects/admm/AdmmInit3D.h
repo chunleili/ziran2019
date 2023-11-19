@@ -679,11 +679,11 @@ public:
     // ./mpm -test 2008 -E 1e-4
     if (test_number == 9) {
       T p_E = 1e-4;
-      sim.output_dir.path = "output/honey_200";
+      sim.output_dir.path = "output/honey_vis20";
 
       // viscosity_v and viscosity_d refer to fang19 Eq.8, Fig.15。
-      sim.viscosity_v = 0.4;
-      sim.viscosity_d = 0.4;
+      sim.viscosity_v = 0.4 * 20;
+      sim.viscosity_d = 0.4 * 20;
 
       sim.end_frame = 200; // 设定结束的帧数
       sim.dx = 0.05;       //网格尺寸
