@@ -679,7 +679,7 @@ public:
     // ./mpm -test 2008 -E 1e-4
     if (test_number == 9) {
       T p_E = 1e-4;
-      sim.output_dir.path = "output/honey_vis20";
+      sim.output_dir.path = "output/honey_vis20_less";
 
       // viscosity_v and viscosity_d refer to fang19 Eq.8, Fig.15。
       sim.viscosity_v = 0.4 * 20;
@@ -745,7 +745,7 @@ public:
       // create source collision object
       T rho = 2;
       T E = 100;
-      int ppc = 8;
+      int ppc = 2;
       Sphere<T, dim> sphere(TV(1, 5, 1), .2);
       TV material_speed(0.0, -1, 0);
       SourceCollisionObject<T, dim> sphere_source(sphere, material_speed);
